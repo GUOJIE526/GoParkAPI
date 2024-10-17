@@ -1,9 +1,8 @@
-﻿using GoParkAPI.DTO;
-using GoParkAPI.Models;
-using GoParkAPI.Services;
+﻿using GoParkAPI.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Net;
@@ -18,10 +17,12 @@ namespace GoParkAPI.Controllers
     public class ParkingLotController : ControllerBase
     {
         private readonly HttpClient _httpClient;
+        private readonly EasyParkContext _context;
         
-        public ParkingLotController(HttpClient httpClient)
+        public ParkingLotController(HttpClient httpClient, EasyParkContext context)
         {
             _httpClient = httpClient;
+            _context = context;
         }
 
         //接收前端傳來的字串
@@ -76,8 +77,31 @@ namespace GoParkAPI.Controllers
             }
         }
 
+        [HttpGet("GetParkingLots")]
+        public async Task<IActionResult> GetParkingLots()
+        {
+            try
+            {
+                var parkingLots = await _context.ParkingLots.Select(p => new
+                {
+                    lotName = p.LotName ?? "無資料",
+                    location = p.Location ?? "無資料",
+                    smallCarSpace = p.SmallCarSpace ?? 0,
+                    RateRules = p.RateRules ?? "無資料",
+                    weekdayRate = p.WeekdayRate ?? 0,
+                    holidayRate = p.HolidayRate ?? 0,
+                    MonRate = p.MonRentalRate ?? 0,
+                    opendoorTime = p.OpendoorTime ?? "無資料",
+                    tel = p.Tel ?? "無資料",
+                    validSpace = p.ValidSpace ?? 0,
+                }).ToListAsync();
+
+                return Ok(parkingLots);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"伺服器錯：{e.Message}");
+            }
+        }
     }
-
-    
-
 }

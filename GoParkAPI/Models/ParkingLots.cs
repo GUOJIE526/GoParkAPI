@@ -7,37 +7,39 @@ public partial class ParkingLots
 {
     public int LotId { get; set; }
 
+    public string? District { get; set; }
+
+    public string? Type { get; set; }
+
     public string LotName { get; set; } = null!;
 
-    public string Location { get; set; } = null!;
+    public string? Location { get; set; }
 
-    public string District { get; set; } = null!;
+    public int? BigCarSpace { get; set; }
+
+    public int? SmallCarSpace { get; set; }
+
+    public int? MotoSpace { get; set; }
+
+    public int? MotherSpace { get; set; }
+
+    public string? RateRules { get; set; }
+
+    public int? WeekdayRate { get; set; }
+
+    public int? HolidayRate { get; set; }
+
+    public int? MonRentalRate { get; set; }
+
+    public string? OpendoorTime { get; set; }
+
+    public string? Tel { get; set; }
 
     public decimal? Latitude { get; set; }
 
     public decimal? Longitude { get; set; }
 
-    public int TotalSpaces { get; set; }
-
-    public int AvailableSpaces { get; set; }
-
-    public int? EvSpaces { get; set; }
-
-    public int? HandicapSpaces { get; set; }
-
-    public decimal HourlyRate { get; set; }
-
-    public decimal? DailyMaxRate { get; set; }
-
-    public decimal? NightRate { get; set; }
-
-    public decimal? MonthlyRate { get; set; }
-
-    public bool? ReservationAllowed { get; set; }
-
-    public bool? MonthlyRentAllowed { get; set; }
-
-    public string? ContactPhone { get; set; }
+    public int? ValidSpace { get; set; }
 
     public virtual ICollection<EntryExitManagement> EntryExitManagement { get; set; } = new List<EntryExitManagement>();
 
