@@ -86,6 +86,8 @@ namespace GoParkAPI.Controllers
                 {
                     lotName = p.LotName ?? "無資料",
                     location = p.Location ?? "無資料",
+                    latitude = p.Latitude ?? 0,
+                    longitude = p.Longitude ?? 0,
                     smallCarSpace = p.SmallCarSpace ?? 0,
                     RateRules = p.RateRules ?? "無資料",
                     weekdayRate = p.WeekdayRate ?? 0,
