@@ -102,7 +102,7 @@ namespace GoParkAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, $"伺服器錯：{e.Message}");
+                return StatusCode(500, $"伺服器錯誤：{e.Message}");
             }
         }
     }
