@@ -1,12 +1,8 @@
 ﻿using GoParkAPI.Models;
 using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
-using System.Globalization;
-using System.Net;
-using System.Text.Json;
 using System.Web;
 
 namespace GoParkAPI.Controllers
