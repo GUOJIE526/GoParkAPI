@@ -80,6 +80,7 @@ namespace GoParkAPI.Controllers
             {
                 var parkingLots = await _context.ParkingLots.Select(p => new
                 {
+                    lotId = p.LotId,
                     lotName = p.LotName ?? "無資料",
                     location = p.Location ?? "無資料",
                     latitude = p.Latitude ?? 0,
