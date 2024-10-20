@@ -1,6 +1,5 @@
 ﻿using GoParkAPI.DTO;
 using GoParkAPI.Models;
-using GoParkAPI.Services;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
