@@ -46,6 +46,67 @@ namespace GoParkAPI.Controllers
             return coupons;
         }
 
+        //依據優惠券使用狀態篩選
+        [HttpGet("filter")]
+        public async Task<IEnumerable<CouponsDTO>> couponFilter(int userId, string filter)
+        {
+
+            IQueryable<CouponsDTO> vouchers = null;
+            //篩選該用戶擁有的優惠券
+            switch (filter)
+            {
+                case "isUsed":
+                    // 返回已使用的優惠券
+                    vouchers = _context.Coupon
+                        .Where(coupon => coupon.UserId == userId && coupon.IsUsed)
+                        .Select(coupon => new CouponsDTO
+                        {
+                            couponId = coupon.CouponId,
+                            couponCode = coupon.CouponCode,
+                            discountAmount = coupon.DiscountAmount,
+                            validFrom = coupon.ValidFrom,
+                            validUntil = coupon.ValidUntil,
+                            isUsed = coupon.IsUsed
+                        });
+                    break;
+                case "available":
+                    // 返回未使用的優惠券
+                    vouchers = _context.Coupon
+                        .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date > DateTime.Now.Date)
+                        .Select(coupon => new CouponsDTO
+                        {
+                            couponId = coupon.CouponId,
+                            couponCode = coupon.CouponCode,
+                            discountAmount = coupon.DiscountAmount,
+                            validFrom = coupon.ValidFrom,
+                            validUntil = coupon.ValidUntil,
+                            isUsed = coupon.IsUsed
+                        });
+                    break;
+                case "expired":
+                    // 返回已失效的優惠券
+                    vouchers = _context.Coupon
+                        .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date < DateTime.Now.Date)
+                        .Select(coupon => new CouponsDTO
+                        {
+                            couponId = coupon.CouponId,
+                            couponCode = coupon.CouponCode,
+                            discountAmount = coupon.DiscountAmount,
+                            validFrom = coupon.ValidFrom,
+                            validUntil = coupon.ValidUntil,
+                            isUsed = coupon.IsUsed
+                        });
+                    break;
+            }
+            if (vouchers == null)
+            {
+                return null;
+            }
+            return vouchers;
+        }
+
+
+
 
 
         // GET: api/Coupons/5
