@@ -11,11 +11,15 @@ public partial class Customer
 
     public string? Password { get; set; }
 
+    public string? Salt { get; set; }
+
     public string? Email { get; set; }
 
     public string? Phone { get; set; }
 
     public DateTime? RegisterDate { get; set; }
+
+    public int BlackCount { get; set; }
 
     public bool IsBlack { get; set; }
 

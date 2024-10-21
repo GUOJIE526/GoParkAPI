@@ -106,6 +106,7 @@ public partial class EasyParkContext : DbContext
             entity.HasIndex(e => e.Username, "UQ__Customer__F3DBC572D2C4FC0C").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.BlackCount).HasColumnName("blackCount");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
@@ -118,6 +119,7 @@ public partial class EasyParkContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("register_date");
+            entity.Property(e => e.Salt).HasColumnName("salt");
             entity.Property(e => e.Username)
                 .HasMaxLength(100)
                 .HasColumnName("username");
@@ -285,7 +287,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<ParkSpace>(entity =>
         {
-            entity.HasKey(e => e.SpaceId).HasName("PK__ParkSpac__793ECA5515CBFB7B");
+            entity.HasKey(e => e.SpaceId).HasName("PK__ParkSpac__793ECA55F16929C2");
 
             entity.Property(e => e.SpaceId).HasColumnName("space_id");
             entity.Property(e => e.IsRented).HasColumnName("is_Rented");
@@ -302,12 +304,11 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<ParkingLotImages>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC9551E429158");
+            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC955D0CCBF34");
 
             entity.Property(e => e.ImageId).HasColumnName("image_id");
-            entity.Property(e => e.ImageName)
-                .HasMaxLength(100)
-                .HasColumnName("image_name");
+            entity.Property(e => e.ImgPath).HasColumnName("imgPath");
+            entity.Property(e => e.ImgTitle).HasColumnName("imgTitle");
             entity.Property(e => e.LotName)
                 .HasMaxLength(255)
                 .HasColumnName("lot_name");

@@ -9,7 +9,9 @@ public partial class ParkingLotImages
 
     public string? LotName { get; set; }
 
-    public string? ImageName { get; set; }
+    public string? ImgTitle { get; set; }
+
+    public string? ImgPath { get; set; }
 
     public virtual ParkingLots? LotNameNavigation { get; set; }
 }
