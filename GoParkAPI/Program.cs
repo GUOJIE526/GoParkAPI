@@ -33,7 +33,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors();
+app.UseCors(PolicyName);
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
