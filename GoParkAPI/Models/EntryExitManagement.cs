@@ -7,9 +7,9 @@ public partial class EntryExitManagement
 {
     public int EntryexitId { get; set; }
 
-    public string LotName { get; set; } = null!;
+    public int LotId { get; set; }
 
-    public string LicensePlate { get; set; } = null!;
+    public int CarId { get; set; }
 
     public string Parktype { get; set; } = null!;
 
@@ -21,17 +21,17 @@ public partial class EntryExitManagement
 
     public int Amount { get; set; }
 
-    public DateTime? ExitTime { get; set; }
+    public DateTime? PaymentTime { get; set; }
 
     public bool PaymentStatus { get; set; }
 
-    public DateTime? PaymentTime { get; set; }
-
     public DateTime ValidTime { get; set; }
+
+    public DateTime? ExitTime { get; set; }
 
     public bool IsFinish { get; set; }
 
-    public virtual Car LicensePlateNavigation { get; set; } = null!;
+    public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLots LotNameNavigation { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 }

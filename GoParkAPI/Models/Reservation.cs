@@ -7,9 +7,9 @@ public partial class Reservation
 {
     public int ResId { get; set; }
 
-    public string LicensePlate { get; set; } = null!;
+    public int CarId { get; set; }
 
-    public string LotName { get; set; } = null!;
+    public int LotId { get; set; }
 
     public DateTime ResTime { get; set; }
 
@@ -31,7 +31,7 @@ public partial class Reservation
 
     public bool IsFinish { get; set; }
 
-    public virtual Car LicensePlateNavigation { get; set; } = null!;
+    public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLots LotNameNavigation { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 }

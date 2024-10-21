@@ -41,19 +41,19 @@ namespace GoParkAPI.Controllers
 
             //篩選該用戶車牌的預訂資料
             var reservations = _context.Reservation
-                .Where(res => userCars.Contains(res.LicensePlate)) // 比對車牌號碼
-                .Where(res => string.IsNullOrEmpty(licensePlate) || res.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
+                .Where(res => userCars.Contains(res.Car.LicensePlate)) // 比對車牌號碼
+                .Where(res => string.IsNullOrEmpty(licensePlate) || res.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
                 .Select(res => new ReservationDTO
                 {
                     resId = res.ResId,
                     resTime = res.ResTime,
-                    lotName = res.LotName,
-                    licensePlate = res.LicensePlate,
+                    lotName = res.Lot.LotName,
+                    licensePlate = res.Car.LicensePlate,
                     isCanceled = res.IsCanceled,
                     isOverdue = res.IsOverdue,
                     isFinish = res.IsFinish,
-                    latitude = _context.ParkingLots.Where(lot => lot.LotName == res.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
-                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.LotName).Select(lot => lot.Longitude).FirstOrDefault()
+                    latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
+                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault()
 
                 });
             if (reservations == null)
@@ -72,18 +72,18 @@ namespace GoParkAPI.Controllers
 
             // 根據停車場名稱模糊查詢訂單
             var reservations = _context.Reservation
-                .Where(res => userCars.Contains(res.LicensePlate) && res.LotName.Contains(lotName))
+                .Where(res => userCars.Contains(res.Car.LicensePlate) && res.Lot.LotName.Contains(lotName))
                 .Select(res => new ReservationDTO
                 {
                     resId = res.ResId,
-                    licensePlate = res.LicensePlate,
+                    licensePlate = res.Car.LicensePlate,
                     resTime = res.ResTime,
-                    lotName = res.LotName,
+                    lotName = res.Lot.LotName,
                     isCanceled = res.IsCanceled,
                     isOverdue = res.IsOverdue,
                     isFinish = res.IsFinish,
-                    latitude = _context.ParkingLots.Where(lot => lot.LotName == res.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
-                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.LotName).Select(lot => lot.Longitude).FirstOrDefault()
+                    latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
+                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault()
                 });
 
             if (reservations == null)

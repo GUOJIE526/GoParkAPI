@@ -11,7 +11,7 @@ public partial class ParkingLots
 
     public string? Type { get; set; }
 
-    public string LotName { get; set; } = null!;
+    public string? LotName { get; set; }
 
     public string? Location { get; set; }
 
@@ -47,9 +47,9 @@ public partial class ParkingLots
 
     public virtual ICollection<MonthlyRental> MonthlyRental { get; set; } = new List<MonthlyRental>();
 
-    public virtual ICollection<ParkSpace> ParkSpace { get; set; } = new List<ParkSpace>();
-
     public virtual ICollection<ParkingLotImages> ParkingLotImages { get; set; } = new List<ParkingLotImages>();
+
+    public virtual ICollection<ParkingSlot> ParkingSlot { get; set; } = new List<ParkingSlot>();
 
     public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
 }

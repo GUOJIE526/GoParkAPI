@@ -7,7 +7,7 @@ public partial class DealRecord
 {
     public int DealId { get; set; }
 
-    public string LicensePlate { get; set; } = null!;
+    public int CarId { get; set; }
 
     public int Amount { get; set; }
 
@@ -15,5 +15,5 @@ public partial class DealRecord
 
     public string ParkType { get; set; } = null!;
 
-    public virtual Car LicensePlateNavigation { get; set; } = null!;
+    public virtual Car Car { get; set; } = null!;
 }

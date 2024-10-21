@@ -40,14 +40,14 @@ namespace GoParkAPI.Controllers
 
             //篩選該用戶車牌的預訂資料
             var parkingRecords = _context.EntryExitManagement
-                .Where(record => userCars.Contains(record.LicensePlate)) // 比對車牌號碼
-                .Where(record => string.IsNullOrEmpty(licensePlate) || record.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
+                .Where(record => userCars.Contains(record.Car.LicensePlate)) // 比對車牌號碼
+                .Where(record => string.IsNullOrEmpty(licensePlate) || record.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
                 .Where(record => record.Parktype == "reservation")  //只顯示預定的停車紀錄，月租不顯示
                 .Select(record => new EntryExitManagementDTO
                 {
                     entryexitId = record.EntryexitId,
-                    lotName = record.LotName,
-                    licensePlate = record.LicensePlate,
+                    lotName = record.Lot.LotName,
+                    licensePlate = record.Car.LicensePlate,
                     entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
                     totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
@@ -69,12 +69,12 @@ namespace GoParkAPI.Controllers
 
             // 根據停車場名稱模糊查詢停車紀錄
             var parkingRecords = _context.EntryExitManagement
-                .Where(record => userCars.Contains(record.LicensePlate) && record.LotName.Contains(lotName))
+                .Where(record => userCars.Contains(record.Car.LicensePlate) && record.Lot.LotName.Contains(lotName))
                 .Select(record => new EntryExitManagementDTO
                 {
                     entryexitId = record.EntryexitId,
-                    lotName = record.LotName,
-                    licensePlate = record.LicensePlate,
+                    lotName = record.Lot.LotName,
+                    licensePlate = record.Car.LicensePlate,
                     entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
                     totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,

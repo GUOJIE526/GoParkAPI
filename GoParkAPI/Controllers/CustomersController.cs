@@ -33,13 +33,15 @@ namespace GoParkAPI.Controllers
         [HttpGet]
         public async Task<IEnumerable<CustomerDTO>> GetCustomer()
         {
-            return _context.Customer.Select(cust=>new CustomerDTO {
-                UserId=cust.UserId,
-                Username=cust.Username,
-                Password=cust.Password,
+            return _context.Customer.Select(cust => new CustomerDTO
+            {
+                UserId = cust.UserId,
+                Username = cust.Username,
+                Password = cust.Password,
                 Salt = cust.Salt,
                 Email = cust.Email,
-                Phone= cust.Phone,
+                Phone = cust.Phone,
+                LicensePlate = _context.Car.Where(car => car.UserId == cust.UserId).Select(car => car.LicensePlate).FirstOrDefault()
             });
         }
 

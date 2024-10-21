@@ -7,9 +7,9 @@ public partial class MonthlyRental
 {
     public int RenId { get; set; }
 
-    public string LicensePlate { get; set; } = null!;
+    public int CarId { get; set; }
 
-    public string LotName { get; set; } = null!;
+    public int LotId { get; set; }
 
     public DateTime StartDate { get; set; }
 
@@ -19,7 +19,7 @@ public partial class MonthlyRental
 
     public bool PaymentStatus { get; set; }
 
-    public virtual Car LicensePlateNavigation { get; set; } = null!;
+    public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLots LotNameNavigation { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 }

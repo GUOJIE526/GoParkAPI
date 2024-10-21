@@ -7,9 +7,9 @@ public partial class MonApplyList
 {
     public int ApplyId { get; set; }
 
-    public string Username { get; set; } = null!;
+    public int UserId { get; set; }
 
-    public string LotName { get; set; } = null!;
+    public int LotId { get; set; }
 
     public DateTime ApplyDate { get; set; }
 
@@ -19,7 +19,7 @@ public partial class MonApplyList
 
     public bool IsCanceled { get; set; }
 
-    public virtual ParkingLots LotNameNavigation { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 
-    public virtual Customer UsernameNavigation { get; set; } = null!;
+    public virtual Customer User { get; set; } = null!;
 }

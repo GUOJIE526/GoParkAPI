@@ -7,7 +7,7 @@ public partial class Customer
 {
     public int UserId { get; set; }
 
-    public string Username { get; set; } = null!;
+    public string? Username { get; set; }
 
     public string? Password { get; set; }
 
@@ -22,6 +22,8 @@ public partial class Customer
     public int BlackCount { get; set; }
 
     public bool IsBlack { get; set; }
+
+    public string? Token { get; set; }
 
     public virtual ICollection<Car> Car { get; set; } = new List<Car>();
 
