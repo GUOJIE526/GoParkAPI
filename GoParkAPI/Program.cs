@@ -1,5 +1,7 @@
+﻿using GoParkAPI;
 using GoParkAPI.Models;
 using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,9 @@ builder.Services.AddCors(options =>
 });
 
 //----------------------------------------
+
+
+builder.Services.AddScoped<Hash>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
