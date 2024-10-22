@@ -37,6 +37,7 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddScoped<Hash>();
+builder.Services.AddScoped<MailService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

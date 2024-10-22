@@ -106,7 +106,6 @@ public partial class EasyParkContext : DbContext
             entity.HasIndex(e => e.Username, "UQ__Customer__F3DBC572D2C4FC0C").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.BlackCount).HasColumnName("blackCount");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
