@@ -283,6 +283,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.District)
                 .HasMaxLength(50)
                 .HasColumnName("district");
+            entity.Property(e => e.EtcSpace).HasColumnName("etcSpace");
             entity.Property(e => e.HolidayRate).HasColumnName("holidayRate");
             entity.Property(e => e.Latitude)
                 .HasColumnType("decimal(18, 10)")
@@ -304,6 +305,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.SmallCarSpace).HasColumnName("smallCarSpace");
             entity.Property(e => e.Tel)
                 .HasMaxLength(100)
+                .HasDefaultValue("empty")
                 .HasColumnName("tel");
             entity.Property(e => e.Type)
                 .HasMaxLength(50)
