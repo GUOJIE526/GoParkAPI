@@ -192,7 +192,7 @@ namespace GoParkAPI.Controllers
                 // 其他登入邏輯
 
 
-                return Ok(new { Message = "Login successful!" });
+                return Ok(new { user = member.UserId});
             }
 
             return Ok(new { Message = "查無此帳號" });
