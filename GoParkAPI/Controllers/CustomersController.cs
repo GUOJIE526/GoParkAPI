@@ -22,11 +22,14 @@ namespace GoParkAPI.Controllers
     {
         private readonly EasyParkContext _context;
         private readonly Hash _hash;
+        private readonly MailService _sentmail;
 
-        public CustomersController(EasyParkContext context, Hash hash)
+
+        public CustomersController(EasyParkContext context, Hash hash, MailService sentmail)
         {
             _context = context;
             _hash = hash;
+            _sentmail = sentmail;
         }
 
         // GET: api/Customers
@@ -79,7 +82,7 @@ namespace GoParkAPI.Controllers
         {
             if (id != custDTO.UserId)
             {
-                return "修改失敗";
+                return "無法修改";
             }
             Customer cust = await _context.Customer.FindAsync(id);
             Car l = await _context.Car.FindAsync(id);
@@ -117,6 +120,11 @@ namespace GoParkAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
         {
+            //密碼加密加鹽
+            var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
+            custDTO.Password = hashedPassword;//加密
+            custDTO.Salt = salt;//加鹽
+
             Customer cust = new Customer
             {
                 //都允許空值 所以直接帶入填入資料 沒填的=>空值
@@ -127,15 +135,8 @@ namespace GoParkAPI.Controllers
                 Email = custDTO.Email,
                 Phone = custDTO.Phone,
             };
-
-            //密碼加密加鹽
-            var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
-
-            custDTO.Password = hashedPassword;//加密
-            custDTO.Salt = salt;//加鹽
-
-            //custDTO.UserId = cust.UserId;//填入的id覆蓋原本預設的id 0
-            _context.Customer.Add(cust);//加進資料庫
+            
+            _context.Customer.Add(cust);//加進資料庫 
             await _context.SaveChangesAsync();//存檔
             Car car = new Car
             {
@@ -143,15 +144,32 @@ namespace GoParkAPI.Controllers
                 LicensePlate = custDTO.LicensePlate,//填入的車牌
                 UserId = cust.UserId,//對應已經覆蓋的id
                 IsActive = true,//填預設值
-            };
+            };       
             _context.Car.Add(car);//加進資料庫
             await _context.SaveChangesAsync();//存檔
 
+            // 檢查 Email 是否存在並發送確認郵件
+            if (!string.IsNullOrEmpty(custDTO.Email))
+            {
+                string subject = "歡迎加入 MyGoParking!";
+                string message = "感謝您的註冊，以下是您的帳號資訊..."; // 郵件內容
+
+                try
+                {
+                    await _sentmail.SendEmailAsync(custDTO.Email, subject, message); // 發送信件
+                }
+                catch (Exception ex)
+                {
+                    // 錯誤處理
+                    Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+                }
+            }
+
+
+
+
 
             return CreatedAtAction("GetCustomer", new { id = custDTO.UserId }, custDTO);
-
-
-            //return custDTO;
         }
 
         [HttpPost("login")]
@@ -173,53 +191,13 @@ namespace GoParkAPI.Controllers
 
                 // 其他登入邏輯
 
+
                 return Ok(new { Message = "Login successful!" });
             }
 
             return Ok(new { Message = "查無此帳號" });
 
         }
-
-        //[HttpPost]
-        //public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
-
-        //    try
-        //    {
-        //        Car car = new Car
-        //        {
-        //            CarId = 0,
-        //            LicensePlate = custDTO.LicensePlate,
-        //            UserId = custDTO.UserId,
-        //            IsActive = true,
-        //        };
-        //        Customer cust = new Customer
-        //        {
-        //            UserId = custDTO.UserId,
-        //            Username = custDTO.Username,
-        //            Password = custDTO.Password,
-        //            Salt = custDTO.Salt,
-        //            Email = custDTO.Email,
-        //            Phone = custDTO.Phone,
-        //        };
-
-        //        _context.Customer.Add(cust);
-        //        _context.Car.Add(car);
-        //        await _context.SaveChangesAsync();
-
-        //        custDTO.UserId = cust.UserId;
-        //        return custDTO;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // 記錄錯誤
-        //        return StatusCode(500, "Internal server error");
-        //    }
-        //}
 
         // DELETE: api/Customers/5
         //[HttpDelete("{id}")]

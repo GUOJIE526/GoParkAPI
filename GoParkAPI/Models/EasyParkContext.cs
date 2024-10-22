@@ -98,7 +98,6 @@ public partial class EasyParkContext : DbContext
             entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F0C3A6D09");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.BlackCount).HasColumnName("blackCount");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
