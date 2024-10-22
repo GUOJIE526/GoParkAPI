@@ -23,6 +23,8 @@ public partial class Customer
 
     public bool IsBlack { get; set; }
 
+    public string? token { get; set; }
+
     public virtual ICollection<Car> Car { get; set; } = new List<Car>();
 
     public virtual ICollection<Coupon> Coupon { get; set; } = new List<Coupon>();
