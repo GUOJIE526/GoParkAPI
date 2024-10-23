@@ -98,6 +98,7 @@ public partial class EasyParkContext : DbContext
             entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F0C3A6D09");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.BlackCount).HasColumnName("blackCount");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
@@ -180,7 +181,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<MonApplyList>(entity =>
         {
-            entity.HasKey(e => e.ApplyId).HasName("PK__MonApply__8260CA82E7CB50E2");
+            entity.HasKey(e => e.ApplyId).HasName("PK__MonApply__8260CA82C6807790");
 
             entity.Property(e => e.ApplyId).HasColumnName("apply_id");
             entity.Property(e => e.ApplyDate)
@@ -191,20 +192,20 @@ public partial class EasyParkContext : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValue("pending")
                 .HasColumnName("apply_status");
+            entity.Property(e => e.CarId).HasColumnName("car_id");
             entity.Property(e => e.IsCanceled).HasColumnName("is_canceled");
             entity.Property(e => e.LotId).HasColumnName("lot_id");
             entity.Property(e => e.NotificationStatus).HasColumnName("notification_status");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Car).WithMany(p => p.MonApplyList)
+                .HasForeignKey(d => d.CarId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_MonApplyList_Car");
 
             entity.HasOne(d => d.Lot).WithMany(p => p.MonApplyList)
                 .HasForeignKey(d => d.LotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MonApplyList_Lot");
-
-            entity.HasOne(d => d.User).WithMany(p => p.MonApplyList)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_MonApplyList_User");
         });
 
         modelBuilder.Entity<MonthlyRental>(entity =>

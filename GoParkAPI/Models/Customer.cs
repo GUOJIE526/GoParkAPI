@@ -29,7 +29,5 @@ public partial class Customer
 
     public virtual ICollection<Coupon> Coupon { get; set; } = new List<Coupon>();
 
-    public virtual ICollection<MonApplyList> MonApplyList { get; set; } = new List<MonApplyList>();
-
     public virtual ICollection<Survey> Survey { get; set; } = new List<Survey>();
 }

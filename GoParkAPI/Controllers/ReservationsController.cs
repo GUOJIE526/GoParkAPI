@@ -93,81 +93,70 @@ namespace GoParkAPI.Controllers
             return reservations;
         }
 
-        //依照日期篩選(ex.過去30天)
-        //依照是否完成訂單篩選
+        [HttpGet("GetLotsInfo")]
+        public async Task<IActionResult> GetLotsInfo(int lotId)
+        {
+            var lotInfo = await _context.ParkingLots.Where(lot => lot.LotId == lotId).Select(lot => new LotsInfoDTO
+            {
+                LotId = lot.LotId,
+                LotName = lot.LotName,
+                Location = lot.Location,
+                SmallCarSpace = lot.SmallCarSpace,
+                EtcSpace = lot.EtcSpace,
+                MotherSpace = lot.MotherSpace,
+                RateRules = lot.RateRules,
+                WeekdayRate = lot.WeekdayRate,
+                HolidayRate = lot.HolidayRate,
+                MonRentalRate = lot.MonRentalRate,
+                Tel = lot.Tel,
+                ValidSpace = lot.ValidSpace,
+                LotImages = _context.ParkingLotImages.Where(img => img.LotId == lotId).Select(img => img.ImgPath).ToList()
+            }).FirstOrDefaultAsync();
+            if (lotInfo == null)
+            {
+                return NotFound(new { Message = "無此停車場" });
+            }
+            return Ok(lotInfo);
+        }
 
-
-        // GET: api/Reservations/5
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<Reservation>> GetReservation(int id)
-        //{
-        //    var reservation = await _context.Reservation.FindAsync(id);
-
-        //    if (reservation == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return reservation;
-        //}
-
-        // PUT: api/Reservations/5    應該不需用到?
+        // POST: api/ResService
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutReservation(int id, Reservation reservation)
-        //{
-        //    if (id != reservation.ResId)
-        //    {
-        //        return BadRequest();
-        //    }
+        [HttpPost("newReservation")]
+        public async Task<ActionResult<ReservationDTO>> PostReservation([FromBody] ReservationDTO resDTO)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "user")?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new { Message = "無法取得用戶ID" });
+            }
+            var userCar = await GetUserCars(int.Parse(userId));
+            if (!userCar.Contains(resDTO.licensePlate))
+            {
+                return BadRequest(new {Message = "該車牌不屬於當前用戶"});
+            }
 
-        //    _context.Entry(reservation).State = EntityState.Modified;
+            var parkingLot = _context.ParkingLots.FirstOrDefault(lot => lot.LotName == resDTO.lotName);
+            if (parkingLot == null)
+            {
+                return BadRequest(new {Message = "無效的停車場"});
+            }
 
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!ReservationExists(id))
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
+            //創建新的預約
+            var newRes = new Reservation
+            {
+                ResTime = resDTO.resTime,
+                LotId = parkingLot.LotId,
+                CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.lotName).CarId,
+                IsCanceled = false,
+                IsOverdue = false,
+                IsFinish = false,
+            };
 
-        //    return NoContent();
-        //}
+            _context.Reservation.Add(newRes);
+            await _context.SaveChangesAsync();
+            return Ok(new {Message = "預約成功", newRes});
+        }
 
-        // POST: api/Reservations  應該不需用到?
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        //public async Task<ActionResult<Reservation>> PostReservation(Reservation reservation)
-        //{
-        //    _context.Reservation.Add(reservation);
-        //    await _context.SaveChangesAsync();
-
-        //    return CreatedAtAction("GetReservation", new { id = reservation.ResId }, reservation);
-        //}
-
-        // DELETE: api/Reservations/5  不會用到(不能刪)
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteReservation(int id)
-        //{
-        //    var reservation = await _context.Reservation.FindAsync(id);
-        //    if (reservation == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    _context.Reservation.Remove(reservation);
-        //    await _context.SaveChangesAsync();
-
-        //    return NoContent();
-        //}
 
         private bool ReservationExists(int id)
         {
