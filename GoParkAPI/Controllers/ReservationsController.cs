@@ -119,6 +119,17 @@ namespace GoParkAPI.Controllers
             return Ok(lotInfo);
         }
 
+        [HttpGet("GetUserCarPlate")]
+        public async Task<ActionResult<List<Car>>> GetUserCarPlate(int userId)
+        {
+            var userCarPlate = await _context.Car.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
+            if (userCarPlate.Count == 0)
+            {
+                return NotFound(new { Message = "無任何車輛" });
+            }
+            return Ok(userCarPlate);
+        }
+
         // POST: api/ResService
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("newReservation")]
@@ -144,12 +155,9 @@ namespace GoParkAPI.Controllers
             //創建新的預約
             var newRes = new Reservation
             {
-                ResTime = resDTO.resTime,
+                CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.licensePlate).CarId,
                 LotId = parkingLot.LotId,
-                CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.lotName).CarId,
-                IsCanceled = false,
-                IsOverdue = false,
-                IsFinish = false,
+                ResTime = resDTO.resTime,
             };
 
             _context.Reservation.Add(newRes);
