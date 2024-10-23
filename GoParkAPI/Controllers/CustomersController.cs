@@ -49,8 +49,8 @@ namespace GoParkAPI.Controllers
             });
         }
 
-        // GET: api/Customers/5
-        [HttpGet("{id}")]
+        //GET: api/Customers/5
+        [HttpGet("info{id}")]
         public async Task<CustomerDTO> GetCustomer(int id)
         {
             var l = await _context.Car.Where(car => car.UserId == id).FirstAsync();
@@ -78,7 +78,7 @@ namespace GoParkAPI.Controllers
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //網址列id 第一個參數
-        [HttpPut("{id}")]
+        [HttpPut("id{id}")]
         public async Task<string> PutCustomer(int id, CustomerDTO custDTO)
         {
             if (id != custDTO.UserId)
@@ -169,53 +169,6 @@ namespace GoParkAPI.Controllers
             return CreatedAtAction("GetCustomer", new { id = custDTO.UserId }, custDTO);
         }
 
-        //[HttpPost("reset{email}")]
-        //public async Task<ActionResult<CustomerDTO>> ResetPassword(string email)
-        //{
-        //    // 檢查 Email 是否存在於系統中
-        //    var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == email);
-        //    if (customer == null)
-        //    {
-        //        return NotFound("該 Email 不存在");
-        //    }
-
-        //    // 檢查新密碼是否與舊密碼相同
-        //    if (customer.Password == Hash.HashPassword(CustomerDTO.Token)) // 確保這裡使用正確的哈希方法
-        //    {
-        //        return BadRequest("新密碼不能與舊密碼相同");
-        //    }
-
-
-        //    // 生成一個密碼重置 token
-        //    var token = Guid.NewGuid().ToString(); // 簡單示範，實際應該使用更安全的 token 生成方式
-        //    customer.Token = token;
-
-        //    //customer.TokenExpiration = DateTime.UtcNow.AddHours(1); // 設定 token 有效期
-
-        //    // 儲存 token 到數據庫
-        //    _context.Customer.Update(customer);
-        //    await _context.SaveChangesAsync();
-
-        //    // 生成重置密碼的鏈接，這裡假設前端有一個處理重置密碼的頁面
-        //    string resetLink = $"https://localhost:5173/reset?token={token}&email={email}";
-
-        //    // 準備郵件的標題和內容
-        //    string subject = "MyGoParking 密碼重置";
-        //    string message = $"<p>親愛的用戶：<br>請點擊以下連結重新設置您的密碼：</p>" + $"<a href=\"{resetLink}\">重設密碼</a><br>" + "<p>此鏈接將在1小時內過期。<br>mygoParking團隊</p>";
-
-        //    try
-        //    {
-        //        // 發送郵件
-        //        await _sentmail.SendEmailAsync(email, subject, message);
-        //        return Ok("密碼重置郵件已發送，請檢查您的郵箱。");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // 發送郵件失敗的錯誤處理
-        //        Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
-        //        return StatusCode(500, "發送郵件時發生錯誤");
-        //    }
-        //}
 
         [HttpPost("reset")]
         public async Task<ActionResult<CustomerDTO>> ResetPassword(string email, string newPassword)
@@ -228,11 +181,6 @@ namespace GoParkAPI.Controllers
             }
 
 
-            // 檢查新密碼是否與舊密碼相同
-            //if (customer.Password == newPassword) // 使用從請求中獲取的新密碼
-            //{
-            //    return BadRequest("新密碼不能與舊密碼相同");
-            //}
 
             // 生成一個密碼重置 token
             var token = Guid.NewGuid().ToString(); // 可考慮使用更安全的生成方法
