@@ -1,6 +1,7 @@
 ﻿using GoParkAPI.DTO;
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
+using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -30,12 +31,38 @@ namespace GoParkAPI.Services
             request.Headers.Add("X-LINE-Authorization", signature);
         }
 
+        //public async Task<PaymentResponseDto> SendPaymentRequest(PaymentRequestDto dto)
+        //{
+        //    var json = _jsonProvider.Serialize(dto);
+        //    var nonce = Guid.NewGuid().ToString();
+        //    var requestUrl = "/v3/payments/request";
+        //    var signature = SignatureProvider.HMACSHA256(channelSecretKey, channelSecretKey + requestUrl + json + nonce);
+
+        //    var request = new HttpRequestMessage(HttpMethod.Post, linePayBaseApiUrl + requestUrl)
+        //    {
+        //        Content = new StringContent(json, Encoding.UTF8, "application/json")
+        //    };
+
+        //    AddLinePayHeaders(request, nonce, signature);
+
+        //    var response = await _client.SendAsync(request);
+
+
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        throw new Exception($"LinePay API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+        //    }
+
+        //    return _jsonProvider.Deserialize<PaymentResponseDto>(await response.Content.ReadAsStringAsync());
+        //}
+
         public async Task<PaymentResponseDto> SendPaymentRequest(PaymentRequestDto dto)
         {
             var json = _jsonProvider.Serialize(dto);
             var nonce = Guid.NewGuid().ToString();
             var requestUrl = "/v3/payments/request";
-            var signature = SignatureProvider.HMACSHA256(channelSecretKey, channelSecretKey + requestUrl + json + nonce);
+            var signature = SignatureProvider.HMACSHA256(
+                channelSecretKey, channelSecretKey + requestUrl + json + nonce);
 
             var request = new HttpRequestMessage(HttpMethod.Post, linePayBaseApiUrl + requestUrl)
             {
@@ -45,24 +72,36 @@ namespace GoParkAPI.Services
             AddLinePayHeaders(request, nonce, signature);
 
             var response = await _client.SendAsync(request);
-  
 
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"LinePay API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
             }
 
-            return _jsonProvider.Deserialize<PaymentResponseDto>(await response.Content.ReadAsStringAsync());
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var paymentResponse = _jsonProvider.Deserialize<PaymentResponseDto>(responseContent);
+
+            // 返回解析的回應資料
+            return paymentResponse;
         }
 
-        public async Task<PaymentConfirmResponseDto> ConfirmPayment(string transactionId, string orderId, PaymentConfirmDto dto)
+
+
+
+
+        //-------------------------------------------------------------------------------------------------------------------
+
+
+        // 取得 transactionId 後進行確認交易
+        public async Task<PaymentConfirmResponseDto> ConfirmPayment(string transactionId, string orderId, PaymentConfirmDto dto) //加上 OrderId 去找資料
         {
             var json = _jsonProvider.Serialize(dto);
+
             var nonce = Guid.NewGuid().ToString();
-            var requestUrl = $"/v3/payments/{transactionId}/confirm";
+            var requestUrl = string.Format("/v3/payments/{0}/confirm", transactionId);
             var signature = SignatureProvider.HMACSHA256(channelSecretKey, channelSecretKey + requestUrl + json + nonce);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, linePayBaseApiUrl + requestUrl)
+            var request = new HttpRequestMessage(HttpMethod.Post, String.Format(linePayBaseApiUrl + requestUrl, transactionId))
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
@@ -70,13 +109,12 @@ namespace GoParkAPI.Services
             AddLinePayHeaders(request, nonce, signature);
 
             var response = await _client.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"LinePay Confirm API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
-            }
-
-            return _jsonProvider.Deserialize<PaymentConfirmResponseDto>(await response.Content.ReadAsStringAsync());
+            var responseDto = _jsonProvider.Deserialize<PaymentConfirmResponseDto>(await response.Content.ReadAsStringAsync());
+            return responseDto;
         }
+
+
+
 
         public async Task TransactionCancel(string transactionId)
         {
@@ -84,7 +122,29 @@ namespace GoParkAPI.Services
             await Task.CompletedTask;
         }
 
+        //--------------------- 月租方案開始 ------------------------
+        //public MonthlyRental MapDtoToModel(PaymentRequestDto dto, string transactionId)
+        //{
+        //    int rentalMonths = dto.PlanId switch
+        //    {
+        //        "oneMonth" => 1,
+        //        "threeMonths" => 3,
+        //        "sixMonths" => 6,
+        //        "twelveMonths" => 12,
+        //        _ => throw new ArgumentException("Invalid PlanId")
+        //    };
 
+        //    return new MonthlyRental
+        //    {
+        //        CarId = 1,
+        //        LotId = 1,
+        //        StartDate = DateTime.Today,
+        //        EndDate = DateTime.Today.AddMonths(rentalMonths),
+        //        Amount = dto.Amount,
+        //        PaymentStatus = false,
+        //        TransactionId = transactionId // 設置 TransactionId
+        //    };
+        //}
         public MonthlyRental MapDtoToModel(PaymentRequestDto dto)
         {
             // 根據方案 ID 動態設置結束日期
@@ -99,21 +159,20 @@ namespace GoParkAPI.Services
 
             return new MonthlyRental
             {
-
                 CarId = 1,
                 LotId = 1,
                 StartDate = DateTime.Today,
                 EndDate = DateTime.Today.AddMonths(rentalMonths),
                 Amount = dto.Amount,
-                PaymentStatus = false
+                PaymentStatus = false,
+                TransactionId = dto.OrderId
             };
-            
+
         }
-        //public async Task SaveMonthlyRental(MonthlyRental rental)
-        //{
-        //    _dbContext.MonthlyRental.Add(rental);
-        //    await _dbContext.SaveChangesAsync();
-        //}
+        //--------------------- 月租方案結束 ------------------------
+
+
+        //------------------ 檢測月租方案是否相符開始 ---------------------
         public bool ValidatePayment(string planId, decimal paidAmount)
         {
             if (!PlanData.Plans.TryGetValue(planId, out var plan))
@@ -132,6 +191,6 @@ namespace GoParkAPI.Services
 
             return true; // 驗證通過
         }
-
+        //------------------ 檢測月租方案是否相符結束 ---------------------
     }
 }

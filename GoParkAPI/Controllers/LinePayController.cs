@@ -85,24 +85,44 @@ namespace GoParkAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new { message = "處理支付時發生錯誤。" });
             }
+
         }
+
+        [HttpPost("UpdatePaymentStatus")]
+        public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
+        {
+            // 根據傳入的 OrderId 比對資料庫中的 TransactionId
+            var rentalRecord = await _context.MonthlyRental
+                .FirstOrDefaultAsync(r => r.TransactionId == dto.OrderId);
+
+            if (rentalRecord == null)
+            {
+                // 如果找不到訂單，回傳 404
+                return NotFound(new { success = false, message = "找不到該訂單" });
+            }
+
+            // 更新 PaymentStatus 為 true
+            rentalRecord.PaymentStatus = true;
+
+            // 保存變更
+            await _context.SaveChangesAsync();
+
+            // 回傳成功訊息
+            return Ok(new { success = true, message = "支付狀態已更新", data = rentalRecord });
+        }
+
+
+
+
 
 
 
         [HttpPost("Confirm")]
         public async Task<PaymentConfirmResponseDto> ConfirmPayment([FromQuery] string transactionId, [FromQuery] string orderId, PaymentConfirmDto dto)
         {
-            //return await _linePayService.ConfirmPayment(transactionId, orderId, dto);
-            //var paymentModel = _linePayService.MapDtoToModel(dto);
-            //await _linePayService.SaveMonthlyRental(paymentModel); // 將資料儲存進資料庫
+
             return await _linePayService.ConfirmPayment(transactionId, orderId, dto);
         }
-
-
-        //[HttpPost("CreateRental")]
-
-     
-
 
 
 
