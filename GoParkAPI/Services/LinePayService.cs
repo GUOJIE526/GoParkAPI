@@ -1,6 +1,7 @@
 ﻿using GoParkAPI.DTO;
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace GoParkAPI.Services
@@ -13,13 +14,13 @@ namespace GoParkAPI.Services
 
         private readonly HttpClient _client;
         private readonly JsonProvider _jsonProvider;
-        private readonly EasyParkContext _dbContext; // 注入 DbContext
+        private readonly EasyParkContext _context;
 
-        public LinePayService(HttpClient client, JsonProvider jsonProvider, EasyParkContext dbContext)
+        public LinePayService(HttpClient client, JsonProvider jsonProvider, EasyParkContext context)
         {
             _client = client;
             _jsonProvider = jsonProvider;
-            _dbContext = dbContext; // 初始化 DbContext
+            _context = context;
         }
 
         private void AddLinePayHeaders(HttpRequestMessage request, string nonce, string signature)
@@ -44,6 +45,8 @@ namespace GoParkAPI.Services
             AddLinePayHeaders(request, nonce, signature);
 
             var response = await _client.SendAsync(request);
+  
+
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"LinePay API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
@@ -81,19 +84,31 @@ namespace GoParkAPI.Services
             await Task.CompletedTask;
         }
 
-        //public MonthlyRental MapDtoToModel(PaymentConfirmDto dto)
-        //{
-        //    return new MonthlyRental
-        //    {
-        //        CarId =1,
-        //        LotId =1,
-        //        StartDate = DateTime.Today,  // 只存年月日，時間部分為 00:00:00
-        //        EndDate = DateTime.Today.AddMonths(12),
-        //        Amount = dto.Amount,
-        //        PaymentStatus = true,
 
-        //    };
-        //}
+        public MonthlyRental MapDtoToModel(PaymentRequestDto dto)
+        {
+            // 根據方案 ID 動態設置結束日期
+            int rentalMonths = dto.PlanId switch
+            {
+                "oneMonth" => 1,
+                "threeMonths" => 3,
+                "sixMonths" => 6,
+                "twelveMonths" => 12,
+                _ => throw new ArgumentException("Invalid PlanId")
+            };
+
+            return new MonthlyRental
+            {
+
+                CarId = 1,
+                LotId = 1,
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today.AddMonths(rentalMonths),
+                Amount = dto.Amount,
+                PaymentStatus = false
+            };
+            
+        }
         //public async Task SaveMonthlyRental(MonthlyRental rental)
         //{
         //    _dbContext.MonthlyRental.Add(rental);

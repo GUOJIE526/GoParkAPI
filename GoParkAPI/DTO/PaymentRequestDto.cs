@@ -6,6 +6,7 @@
     public List<PackageDto> Packages { get; set; }
     public RedirectUrlsDto RedirectUrls { get; set; }
     public RequestOptionDto? Options { get; set; }
+    public string PlanId { get; set; }
 }
 public class PackageDto
 {
@@ -14,6 +15,9 @@ public class PackageDto
     public string Name { get; set; }
     public List<LinePayProductDto> Products { get; set; }
     public int? UserFee { get; set; }
+    public int? CarId { get; set; }
+    public int? LotId { get; set; }
+   
 
 }
 public class LinePayProductDto

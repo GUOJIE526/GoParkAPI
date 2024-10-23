@@ -1,8 +1,12 @@
 ﻿using GoParkAPI.DTO;
+using GoParkAPI.Models;
 using GoParkAPI.Services;
+using Humanizer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
+using System.Security.Policy;
 
 namespace GoParkAPI.Controllers
 {
@@ -11,10 +15,15 @@ namespace GoParkAPI.Controllers
     public class LinePayController : ControllerBase
     {
         private readonly LinePayService _linePayService;
-        public LinePayController(LinePayService linePayService)
+        private readonly EasyParkContext _context;
+        private readonly MailService _sentmail;
+        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail)
         {
             _linePayService = linePayService;
+            _context = context;
+            _sentmail = sentmail;
         }
+
 
 
         // 新增 ValidatePayment 方法，使用 Service 進行驗證
@@ -47,12 +56,38 @@ namespace GoParkAPI.Controllers
         }
 
 
-
         [HttpPost("Create")]
-        public async Task<PaymentResponseDto> CreatePayment(PaymentRequestDto dto)
+        public async Task<IActionResult> CreatePayment([FromBody] PaymentRequestDto dto)
         {
-            return await _linePayService.SendPaymentRequest(dto);
+            try
+            {
+                // 使用 LinePay 服務發送支付請求
+                var paymentResponse = await _linePayService.SendPaymentRequest(dto);
+
+                // 將 DTO 映射為 MonthlyRental 模型
+                MonthlyRental rentalRecord = _linePayService.MapDtoToModel(dto);
+
+                // 將租賃記錄新增到資料庫
+                await _context.MonthlyRental.AddAsync(rentalRecord);
+
+                // 保存變更
+                await _context.SaveChangesAsync();
+
+                // 回傳支付結果
+                return Ok(paymentResponse);
+            }
+            catch (Exception ex)
+            {
+                // 記錄錯誤（建議使用 ILogger）
+                Console.WriteLine($"發生錯誤：{ex.Message}");
+
+                // 回傳錯誤回應
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "處理支付時發生錯誤。" });
+            }
         }
+
+
 
         [HttpPost("Confirm")]
         public async Task<PaymentConfirmResponseDto> ConfirmPayment([FromQuery] string transactionId, [FromQuery] string orderId, PaymentConfirmDto dto)
@@ -63,10 +98,18 @@ namespace GoParkAPI.Controllers
             return await _linePayService.ConfirmPayment(transactionId, orderId, dto);
         }
 
+
+        //[HttpPost("CreateRental")]
+
+     
+
+
+
+
         [HttpGet("Cancel")]
         public async void CancelTransaction([FromQuery] string transactionId)
         {
             _linePayService.TransactionCancel(transactionId);
-        }   
+        }
     }
 }
