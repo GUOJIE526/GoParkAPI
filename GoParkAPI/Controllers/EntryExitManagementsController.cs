@@ -45,12 +45,13 @@ namespace GoParkAPI.Controllers
                 .Where(record => record.Parktype == "reservation")  //只顯示預定的停車紀錄，月租不顯示
                 .Select(record => new EntryExitManagementDTO
                 {
+                    
                     entryexitId = record.EntryexitId,
                     lotName = record.Lot.LotName,
                     licensePlate = record.Car.LicensePlate,
                     entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
-                    totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                    //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
                 });
             if (parkingRecords == null)
@@ -77,7 +78,7 @@ namespace GoParkAPI.Controllers
                     licensePlate = record.Car.LicensePlate,
                     entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
-                    totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                    //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
                 });
 
@@ -91,18 +92,54 @@ namespace GoParkAPI.Controllers
 
 
         // GET: api/EntryExitManagements/5
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<EntryExitManagement>> GetEntryExitManagement(int id)
-        //{
-        //    var entryExitManagement = await _context.EntryExitManagement.FindAsync(id);
+        [HttpGet("{id}")]
+        public async Task<ParkingDetailDTO> GetEntryExitDetail(int id)
+        {
+            var parkingDetail = await _context.EntryExitManagement
+                .Where(record => record.EntryexitId == id)
+                .Select(record => new ParkingDetailDTO
+                {
+                    entryexitId = record.EntryexitId,
+                    lotName = record.Lot.LotName,
+                    district = record.Lot.District,
+                    location = record.Lot.Location,
+                    latitude = record.Lot.Latitude,
+                    longitude = record.Lot.Longitude,
+                    licensePlate = record.Car.LicensePlate,
+                    entryTime = record.EntryTime,
+                    exitTime = record.ExitTime,
+                    //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                    amount = record.Amount
+                })
+                .FirstOrDefaultAsync(); ;
 
-        //    if (entryExitManagement == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (parkingDetail == null)
+            {
+                return null;
+            }
+            return parkingDetail;
 
-        //    return entryExitManagement;
-        //}
+            //var record = await _context.EntryExitManagement.FindAsync(id);
+            //if(record != null)
+            //{
+            //    EntryExitManagementDTO parkingDetail = new EntryExitManagementDTO
+            //    {
+            //        entryexitId = record.EntryexitId,
+            //        lotName = record.Lot.LotName,
+            //        district = record.Lot.District,
+            //        location = record.Lot.Location,
+            //        licensePlate = record.Car.LicensePlate,
+            //        entryTime = record.EntryTime,
+            //        exitTime = record.ExitTime,
+            //        //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+            //        amount = record.Amount
+            //    };
+            //    return parkingDetail;
+            //}
+            //return null;
+
+
+        }
 
         // PUT: api/EntryExitManagements/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
