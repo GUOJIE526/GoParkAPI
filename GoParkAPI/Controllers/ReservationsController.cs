@@ -169,6 +169,7 @@ namespace GoParkAPI.Controllers
                     CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.licensePlate).CarId,
                     LotId = parkingLot.LotId,
                     ResTime = resDTO.resTime,
+                    Amount = 3000,
                     IsCanceled = false,
                     IsOverdue = false,
                     IsFinish = false
@@ -177,7 +178,7 @@ namespace GoParkAPI.Controllers
                 _context.Reservation.Add(newRes);
                 parkingLot.ValidSpace -= 1; // 預約成功扣減1個車位
                 await _context.SaveChangesAsync();
-                var result = new { Message = "預約成功", newRes = new { newRes.CarId , Lotid = newRes.LotId } };
+                var result = new { Message = "預約成功", newRes = new { newRes.CarId , newRes.LotId, newRes.ResTime, newRes.Amount} };
                 return Ok(result);
             
             }
