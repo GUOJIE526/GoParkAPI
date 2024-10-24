@@ -10,6 +10,10 @@
 
         public string? Location { get; set; }
 
+        public decimal? Latitude { get; set; }
+
+        public decimal? Longitude { get; set; }
+
         public int SmallCarSpace { get; set; }
 
         public int EtcSpace { get; set; }

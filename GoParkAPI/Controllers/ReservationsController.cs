@@ -101,6 +101,8 @@ namespace GoParkAPI.Controllers
                 LotId = lot.LotId,
                 LotName = lot.LotName,
                 Location = lot.Location,
+                Latitude = lot.Latitude,
+                Longitude = lot.Longitude,
                 SmallCarSpace = lot.SmallCarSpace,
                 EtcSpace = lot.EtcSpace,
                 MotherSpace = lot.MotherSpace,
@@ -133,14 +135,13 @@ namespace GoParkAPI.Controllers
         // POST: api/ResService
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("newReservation")]
-        public async Task<ActionResult<ReservationDTO>> PostReservation([FromBody] ReservationDTO resDTO)
+        public async Task<ActionResult<ReservationDTO>> PostReservation([FromBody] ReservationDTO resDTO, int userId)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "user")?.Value;
             if (userId == null)
             {
-                return Unauthorized(new { Message = "無法取得用戶ID" });
+                return BadRequest(new { Message = "無法取得用戶ID" });
             }
-            var userCar = await GetUserCars(int.Parse(userId));
+            var userCar = await _context.Car.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
             if (!userCar.Contains(resDTO.licensePlate))
             {
                 return BadRequest(new {Message = "該車牌不屬於當前用戶"});
@@ -150,6 +151,11 @@ namespace GoParkAPI.Controllers
             if (parkingLot == null)
             {
                 return BadRequest(new {Message = "無效的停車場"});
+            }
+            //檢查車位是否足夠
+            if(parkingLot.ValidSpace <= 0)
+            {
+                return BadRequest(new { Message = "車位已滿" });
             }
 
             //創建新的預約
@@ -161,6 +167,7 @@ namespace GoParkAPI.Controllers
             };
 
             _context.Reservation.Add(newRes);
+            parkingLot.ValidSpace -= 1;//預約成功扣1個車位
             await _context.SaveChangesAsync();
             return Ok(new {Message = "預約成功", newRes});
         }
