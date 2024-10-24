@@ -11,11 +11,11 @@ public partial class Reservation
 
     public int LotId { get; set; }
 
-    public DateTime ResTime { get; set; }
+    public DateTime? ResTime { get; set; }
 
-    public DateTime ValidUntil { get; set; }
+    public DateTime? ValidUntil { get; set; }
 
-    public DateTime StartTime { get; set; }
+    public DateTime? StartTime { get; set; }
 
     public int Amount { get; set; }
 

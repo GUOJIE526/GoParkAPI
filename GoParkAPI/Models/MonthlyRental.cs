@@ -18,9 +18,8 @@ public partial class MonthlyRental
     public int Amount { get; set; }
 
     public bool PaymentStatus { get; set; }
-    
-    //// 新增 TransactionId 欄位
-    public string? TransactionId { get; set; } // 支付平台的唯一交易 ID，可為 null
+
+    public string? TransactionId { get; set; }
 
     public virtual Car Car { get; set; } = null!;
 

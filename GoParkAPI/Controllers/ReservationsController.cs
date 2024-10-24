@@ -46,7 +46,7 @@ namespace GoParkAPI.Controllers
                 .Select(res => new ReservationDTO
                 {
                     resId = res.ResId,
-                    resTime = res.ResTime,
+                    resTime = (DateTime)res.ResTime,
                     lotName = res.Lot.LotName,
                     licensePlate = res.Car.LicensePlate,
                     isCanceled = res.IsCanceled,
@@ -77,7 +77,7 @@ namespace GoParkAPI.Controllers
                 {
                     resId = res.ResId,
                     licensePlate = res.Car.LicensePlate,
-                    resTime = res.ResTime,
+                    resTime = (DateTime)res.ResTime,
                     lotName = res.Lot.LotName,
                     isCanceled = res.IsCanceled,
                     isOverdue = res.IsOverdue,
@@ -135,41 +135,57 @@ namespace GoParkAPI.Controllers
         // POST: api/ResService
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("newReservation")]
-        public async Task<ActionResult<ReservationDTO>> PostReservation([FromBody] ReservationDTO resDTO, int userId)
+        public async Task<IActionResult> PostReservation([FromBody] ReservationDTO resDTO, [FromQuery] int userId)
         {
-            if (userId == null)
+            try
             {
-                return BadRequest(new { Message = "無法取得用戶ID" });
-            }
-            var userCar = await _context.Car.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
-            if (!userCar.Contains(resDTO.licensePlate))
-            {
-                return BadRequest(new {Message = "該車牌不屬於當前用戶"});
-            }
 
-            var parkingLot = _context.ParkingLots.FirstOrDefault(lot => lot.LotName == resDTO.lotName);
-            if (parkingLot == null)
-            {
-                return BadRequest(new {Message = "無效的停車場"});
-            }
-            //檢查車位是否足夠
-            if(parkingLot.ValidSpace <= 0)
-            {
-                return BadRequest(new { Message = "車位已滿" });
-            }
+                if (userId == null)
+                {
+                    return BadRequest(new { Message = "無法取得用戶ID" });
+                }
 
-            //創建新的預約
-            var newRes = new Reservation
-            {
-                CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.licensePlate).CarId,
-                LotId = parkingLot.LotId,
-                ResTime = resDTO.resTime,
-            };
+                var userCar = await _context.Car.Where(c => c.UserId == userId)
+                                    .Select(c => c.LicensePlate).ToListAsync();
+                if (!userCar.Contains(resDTO.licensePlate))
+                {
+                    return BadRequest(new { Message = "該車牌不屬於當前用戶" });
+                }
 
-            _context.Reservation.Add(newRes);
-            parkingLot.ValidSpace -= 1;//預約成功扣1個車位
-            await _context.SaveChangesAsync();
-            return Ok(new {Message = "預約成功", newRes});
+                var parkingLot = _context.ParkingLots.FirstOrDefault(lot => lot.LotName == resDTO.lotName);
+                if (parkingLot == null)
+                {
+                    return BadRequest(new { Message = "無效的停車場" });
+                }
+
+                if (parkingLot.ValidSpace <= 0)
+                {
+                    return BadRequest(new { Message = "車位已滿" });
+                }
+
+                // 創建新的預約
+                var newRes = new Reservation
+                {
+                    CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.licensePlate).CarId,
+                    LotId = parkingLot.LotId,
+                    ResTime = resDTO.resTime,
+                    IsCanceled = false,
+                    IsOverdue = false,
+                    IsFinish = false
+                };
+
+                _context.Reservation.Add(newRes);
+                parkingLot.ValidSpace -= 1; // 預約成功扣減1個車位
+                await _context.SaveChangesAsync();
+                var result = new { Message = "預約成功", newRes = new { newRes.CarId , Lotid = newRes.LotId } };
+                return Ok(result);
+            
+            }
+            catch (Exception ex)
+            {
+                // 捕捉所有異常並返回具體錯誤訊息
+                return StatusCode(500, new { Message = "伺服器內部錯誤", Detail = ex.Message });
+            }
         }
 
 

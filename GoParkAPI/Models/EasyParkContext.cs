@@ -45,13 +45,11 @@ public partial class EasyParkContext : DbContext
 
     public virtual DbSet<Transactions> Transactions { get; set; }
 
- 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Car>(entity =>
         {
-            entity.HasKey(e => e.CarId).HasName("PK__Car__4C9A0DB3F9B9C10C");
+            entity.HasKey(e => e.CarId).HasName("PK__Car__4C9A0DB3C9BE50E7");
 
             entity.Property(e => e.CarId).HasColumnName("car_id");
             entity.Property(e => e.IsActive)
@@ -73,7 +71,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Coupon>(entity =>
         {
-            entity.HasKey(e => e.CouponId).HasName("PK__Coupon__58CF6389657CE9B5");
+            entity.HasKey(e => e.CouponId).HasName("PK__Coupon__58CF6389B3B13F35");
 
             entity.Property(e => e.CouponId).HasColumnName("coupon_id");
             entity.Property(e => e.CouponCode)
@@ -97,7 +95,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370FCFC56F25");
+            entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F0C3A6D09");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.BlackCount).HasColumnName("blackCount");
@@ -122,7 +120,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<DealRecord>(entity =>
         {
-            entity.HasKey(e => e.DealId).HasName("PK__DealReco__C012A76C566D3CDF");
+            entity.HasKey(e => e.DealId).HasName("PK__DealReco__C012A76CEF414B9A");
 
             entity.Property(e => e.DealId).HasColumnName("deal_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -142,7 +140,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<EntryExitManagement>(entity =>
         {
-            entity.HasKey(e => e.EntryexitId).HasName("PK__EntryExi__FD3EA5F688C64E87");
+            entity.HasKey(e => e.EntryexitId).HasName("PK__EntryExi__FD3EA5F6174CE504");
 
             entity.Property(e => e.EntryexitId).HasColumnName("entryexit_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -212,7 +210,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<MonthlyRental>(entity =>
         {
-            entity.HasKey(e => e.RenId).HasName("PK__MonthlyR__5833C15224355B08");
+            entity.HasKey(e => e.RenId).HasName("PK__MonthlyR__5833C152FA762C76");
 
             entity.Property(e => e.RenId).HasColumnName("ren_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -225,7 +223,8 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.StartDate)
                 .HasColumnType("datetime")
                 .HasColumnName("start_date");
-            entity.Property(e => e.TransactionId).HasColumnName("TransactionId");
+            entity.Property(e => e.TransactionId).HasMaxLength(50);
+
             entity.HasOne(d => d.Car).WithMany(p => p.MonthlyRental)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -239,7 +238,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Orders>(entity =>
         {
-            entity.HasKey(e => e.OrdId).HasName("PK__Orders__DC39D7DFDE814A3B");
+            entity.HasKey(e => e.OrdId).HasName("PK__Orders__DC39D7DF1E7759D7");
 
             entity.Property(e => e.OrdId).HasColumnName("ord_id");
             entity.Property(e => e.Amount)
@@ -261,7 +260,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<ParkingLotImages>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC95579418B2A");
+            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC9551A02B4EF");
 
             entity.Property(e => e.ImageId).HasColumnName("image_id");
             entity.Property(e => e.ImgPath).HasColumnName("imgPath");
@@ -318,7 +317,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<ParkingSlot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__ParkingS__971A01BB3B4DE242");
+            entity.HasKey(e => e.SlotId).HasName("PK__ParkingS__971A01BB80C91485");
 
             entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.IsRented).HasColumnName("is_Rented");
@@ -332,7 +331,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Reservation>(entity =>
         {
-            entity.HasKey(e => e.ResId).HasName("PK__Reservat__2090B50D39726C2F");
+            entity.HasKey(e => e.ResId).HasName("PK__Reservat__2090B50D7D0EB7C2");
 
             entity.Property(e => e.ResId).HasColumnName("res_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -367,7 +366,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Revenue>(entity =>
         {
-            entity.HasKey(e => e.RevenueId).HasName("PK__Revenue__3DF902E954147119");
+            entity.HasKey(e => e.RevenueId).HasName("PK__Revenue__3DF902E9F4C5372A");
 
             entity.Property(e => e.RevenueId).HasColumnName("revenue_id");
             entity.Property(e => e.CreatedTime)
@@ -382,7 +381,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Survey>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Survey__3213E83FDBE6C52D");
+            entity.HasKey(e => e.Id).HasName("PK__Survey__3213E83FD161EDA5");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.IsReplied).HasColumnName("is_replied");
@@ -408,7 +407,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Transactions>(entity =>
         {
-            entity.HasKey(e => e.TranId).HasName("PK__Transact__A67F8A20000C9366");
+            entity.HasKey(e => e.TranId).HasName("PK__Transact__A67F8A209D223FF6");
 
             entity.Property(e => e.TranId).HasColumnName("tran_id");
             entity.Property(e => e.CouponId).HasColumnName("coupon_id");
