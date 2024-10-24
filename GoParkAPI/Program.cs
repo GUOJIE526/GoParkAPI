@@ -1,5 +1,7 @@
 ﻿using GoParkAPI;
 using GoParkAPI.Models;
+using GoParkAPI.Providers;
+using GoParkAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -32,6 +34,13 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+//----------------------------------------
+
+// 註冊 JsonProvider 作為 Singleton 服務
+builder.Services.AddSingleton<JsonProvider>();
+
+// 註冊 LinePayService 並使用 IHttpClientFactory
+builder.Services.AddHttpClient<LinePayService>();
 
 //----------------------------------------
 
