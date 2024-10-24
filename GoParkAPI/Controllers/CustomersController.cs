@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 using System.ComponentModel.DataAnnotations;
 using GoParkAPI.DTO;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.DataProtection.XmlEncryption;
 
 namespace GoParkAPI.Controllers
 {
@@ -48,11 +49,11 @@ namespace GoParkAPI.Controllers
             });
         }
 
-        // GET: api/Customers/5
-        [HttpGet("{id}")]
+        //GET: api/Customers/5
+        [HttpGet("info{id}")]
         public async Task<CustomerDTO> GetCustomer(int id)
         {
-            var l = await _context.Car.Where(car=>car.UserId == id).FirstAsync();
+            var l = await _context.Car.Where(car => car.UserId == id).FirstAsync();
             string cnum = l.LicensePlate;
             var customer = await _context.Customer.FindAsync(id);
             CustomerDTO custDTO = new CustomerDTO
@@ -77,7 +78,7 @@ namespace GoParkAPI.Controllers
         // PUT: api/Customers/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //網址列id 第一個參數
-        [HttpPut("{id}")]
+        [HttpPut("id{id}")]
         public async Task<string> PutCustomer(int id, CustomerDTO custDTO)
         {
             if (id != custDTO.UserId)
@@ -135,7 +136,7 @@ namespace GoParkAPI.Controllers
                 Email = custDTO.Email,
                 Phone = custDTO.Phone,
             };
-            
+
             _context.Customer.Add(cust);//加進資料庫 
             await _context.SaveChangesAsync();//存檔
             Car car = new Car
@@ -144,7 +145,7 @@ namespace GoParkAPI.Controllers
                 LicensePlate = custDTO.LicensePlate,//填入的車牌
                 UserId = cust.UserId,//對應已經覆蓋的id
                 IsActive = true,//填預設值
-            };       
+            };
             _context.Car.Add(car);//加進資料庫
             await _context.SaveChangesAsync();//存檔
 
@@ -152,7 +153,7 @@ namespace GoParkAPI.Controllers
             if (!string.IsNullOrEmpty(custDTO.Email))
             {
                 string subject = "歡迎加入 MyGoParking!";
-                string message = "感謝您的註冊，以下是您的帳號資訊..."; // 郵件內容
+                string message = $"<p>親愛的用戶： 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
 
                 try
                 {
@@ -165,12 +166,66 @@ namespace GoParkAPI.Controllers
                 }
             }
 
-
-
-
-
             return CreatedAtAction("GetCustomer", new { id = custDTO.UserId }, custDTO);
         }
+
+
+        [HttpPost("reset")]
+        public async Task<ActionResult<CustomerDTO>> ResetPassword(string email, string newPassword)
+        {
+            // 檢查 Email 是否存在於系統中
+            var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == email);
+            if (customer == null)
+            {
+                return NotFound("該 Email 不存在");
+            }
+
+
+
+            // 生成一個密碼重置 token
+            var token = Guid.NewGuid().ToString(); // 可考慮使用更安全的生成方法
+            customer.Token = token;
+
+            // 檢查新密碼是否與舊密碼相同
+            if (customer.Password == _hash.HashPassword(newPassword).Item1) // 使用哈希方法
+            {
+                return BadRequest("新密碼不能與舊密碼相同");
+            }
+
+            // 將新密碼進行哈希處理並更新
+            var (hashedPassword, salt) = _hash.HashPassword(newPassword);
+            customer.Password = hashedPassword; // 更新哈希後的新密碼
+            customer.Salt = salt; // 更新鹽值
+
+            // 設定 token 有效期
+            //customer.TokenExpiration = DateTime.UtcNow.AddHours(1);
+
+            // 儲存 token 到數據庫
+            _context.Customer.Update(customer);
+            await _context.SaveChangesAsync();
+
+            // 生成重置密碼的鏈接
+            string resetLink = $"http://localhost:5173/signIn?token={token}&email={email}";
+
+            // 準備郵件的標題和內容
+            string subject = "MyGoParking 密碼重置";
+            string message = $"<p>親愛的用戶：<br>請點擊以下連結確認您的新密碼：</p>" + $"<a href=\"{resetLink}\">確認新密碼: \"{newPassword}\"</a><br>" + "<p>此鏈接將在1小時內過期。<br>mygoParking團隊</p>";
+
+            try
+            {
+                // 發送郵件
+                await _sentmail.SendEmailAsync(email, subject, message);
+                return Ok("密碼重置郵件已發送，請檢查您的郵箱。");
+            }
+            catch (Exception ex)
+            {
+                // 發送郵件失敗的錯誤處理
+                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+                return StatusCode(500, "發送郵件時發生錯誤");
+            }
+        }
+
+
 
         [HttpPost("login")]
         public IActionResult Login(LoginsDTO login)
@@ -220,4 +275,5 @@ namespace GoParkAPI.Controllers
             return _context.Customer.Any(e => e.UserId == id);
         }
     }
+
 }
