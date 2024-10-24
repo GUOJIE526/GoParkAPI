@@ -1,18 +1,24 @@
 ﻿namespace GoParkAPI.DTO
 {
-    public class EntryExitManagementDTO
+    public class ParkingDetailDTO
     {
         public int entryexitId { get; set; }
 
         public string lotName { get; set; } = null!;
 
+        public string? district { get; set; } = null!;
+
+        public string? location { get; set; } = null!;
+
+        public decimal? latitude { get; set; }  //緯度
+
+        public decimal? longitude { get; set; }  //經度
+
         public string licensePlate { get; set; } = null!;
 
         public DateTime entryTime { get; set; }
-        
-        public DateTime? exitTime { get; set; }
 
-        //public int? totalMins { get; set; }
+        public DateTime? exitTime { get; set; }
 
         public int? amount { get; set; }
 
