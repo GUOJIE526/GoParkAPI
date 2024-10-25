@@ -13,6 +13,7 @@ using System.ComponentModel.DataAnnotations;
 using GoParkAPI.DTO;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection.XmlEncryption;
+using NuGet.Protocol.Plugins;
 
 namespace GoParkAPI.Controllers
 {
@@ -121,52 +122,61 @@ namespace GoParkAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
         {
-            //密碼加密加鹽
-            var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
-            custDTO.Password = hashedPassword;//加密
-            custDTO.Salt = salt;//加鹽
-
-            Customer cust = new Customer
+            var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
+            if (customer == null)
             {
-                //都允許空值 所以直接帶入填入資料 沒填的=>空值
-                UserId = custDTO.UserId,
-                Username = custDTO.Username,
-                Password = custDTO.Password,
-                Salt = custDTO.Salt,
-                Email = custDTO.Email,
-                Phone = custDTO.Phone,
-            };
+                //密碼加密加鹽
+                var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
+                custDTO.Password = hashedPassword;//加密
+                custDTO.Salt = salt;//加鹽
 
-            _context.Customer.Add(cust);//加進資料庫 
-            await _context.SaveChangesAsync();//存檔
-            Car car = new Car
-            {
-                CarId = 0,//填預設值 系統會覆蓋
-                LicensePlate = custDTO.LicensePlate,//填入的車牌
-                UserId = cust.UserId,//對應已經覆蓋的id
-                IsActive = true,//填預設值
-            };
-            _context.Car.Add(car);//加進資料庫
-            await _context.SaveChangesAsync();//存檔
-
-            // 檢查 Email 是否存在並發送確認郵件
-            if (!string.IsNullOrEmpty(custDTO.Email))
-            {
-                string subject = "歡迎加入 MyGoParking!";
-                string message = $"<p>親愛的用戶： 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
-
-                try
+                Customer cust = new Customer
                 {
-                    await _sentmail.SendEmailAsync(custDTO.Email, subject, message); // 發送信件
-                }
-                catch (Exception ex)
+                    //都允許空值 所以直接帶入填入資料 沒填的=>空值
+                    UserId = custDTO.UserId,
+                    Username = custDTO.Username,
+                    Password = custDTO.Password,
+                    Salt = custDTO.Salt,
+                    Email = custDTO.Email,
+                    Phone = custDTO.Phone,
+                };
+                _context.Customer.Add(cust);//加進資料庫 
+                await _context.SaveChangesAsync();//存檔
+                Car car = new Car
                 {
-                    // 錯誤處理
-                    Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+                    CarId = 0,//填預設值 系統會覆蓋
+                    LicensePlate = custDTO.LicensePlate,//填入的車牌
+                    UserId = cust.UserId,//對應已經覆蓋的id
+                    IsActive = true,//填預設值
+                };
+                _context.Car.Add(car);//加進資料庫
+                await _context.SaveChangesAsync();//存檔
+
+                // 檢查 Email 是否存在並發送確認郵件
+                if (!string.IsNullOrEmpty(custDTO.Email))
+                {
+                    string subject = "歡迎加入 MyGoParking!";
+                    string message = $"<p>親愛的用戶： 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
+
+                    try
+                    {
+                        await _sentmail.SendEmailAsync(custDTO.Email, subject, message); // 發送信件
+                    }
+                    catch (Exception ex)
+                    {
+                        // 錯誤處理
+                        Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+                    }
                 }
+                var id = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
+                //return CreatedAtAction("GetCustomer", new {  id });
+                return Ok( new { message = id.UserId });
             }
-
-            return CreatedAtAction("GetCustomer", new { id = custDTO.UserId }, custDTO);
+            else
+            {
+                return Ok(new { message="此帳號已註冊!"});
+            }
+            
         }
 
 
@@ -231,9 +241,14 @@ namespace GoParkAPI.Controllers
         public IActionResult Login(LoginsDTO login)
 
         {
+            bool exit = false;
+            string message = "";
+            int UserId = 0;
             var member = _context.Customer.Where(m => m.Email.Equals(login.Email)).SingleOrDefault();
+
             if (member != null)
             {
+               
                 // 從數據庫中獲取已加密的密碼和鹽值
                 var hashedPassword = member.Password;
                 var salt = member.Salt;
@@ -241,16 +256,28 @@ namespace GoParkAPI.Controllers
 
                 if (!isPasswordValid)
                 {
-                    return Unauthorized(new { Message = "Invalid credentials" });
+                    
+                    message = "登入失敗";
                 }
-
-                // 其他登入邏輯
-
-
-                return Ok(new { user = member.UserId});
+                else
+                {
+                    exit = true;
+                    message = "登入成功";
+                    UserId = member.UserId;
+                }
             }
-
-            return Ok(new { Message = "查無此帳號" });
+            else
+            {
+                exit = false;
+                message = "無此帳號";
+            }
+            exitDTO exitDTO = new exitDTO
+            {
+                exit = exit,
+                UserId = UserId,
+                message = message,
+            };
+            return Ok(exitDTO);
 
         }
 
