@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using GoParkAPI.Models;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using GoParkAPI.DTO;
 
 namespace GoParkAPI.Controllers
 {
@@ -22,82 +24,101 @@ namespace GoParkAPI.Controllers
 
         // GET: api/Cars_
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Car>>> GetCar()
+        public async Task<IEnumerable<CarsDTO>> GetCars(int userId)
         {
-            return await _context.Car.ToListAsync();
-        }
-
-        // GET: api/Cars_/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Car>> GetCar(int id)
-        {
-            var car = await _context.Car.FindAsync(id);
-
-            if (car == null)
+            var cars =  _context.Car
+                .Where(car => car.UserId == userId)
+                .Select(car => new CarsDTO
+                {
+                    carId = car.CarId,
+                    licensePlate = car.LicensePlate,
+                    registerDate = car.RegisterDate,
+                    isActive = car.IsActive
+                });
+            if (cars == null)
             {
-                return NotFound();
+                return null;
             }
-
-            return car;
+            return cars;
         }
+
 
         // PUT: api/Cars_/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCar(int id, Car car)
+        [HttpPut()]
+        public async Task<string> PutCars(List<CarsDTO> carsDto)
         {
-            if (id != car.CarId)
+            foreach (var car in carsDto)
             {
-                return BadRequest();
+                // 找到對應的車輛
+                var updateCar = await _context.Car.FindAsync(car.carId);
+                if (updateCar == null)
+                {
+                    return "修改失敗";
+                }
+                updateCar.IsActive = car.isActive;
+                _context.Entry(updateCar).Property(c => c.IsActive).IsModified = true;
+                
             }
-
-            _context.Entry(car).State = EntityState.Modified;
-
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CarExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                throw;
             }
 
-            return NoContent();
+            return "修改成功";
         }
 
         // POST: api/Cars_
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Car>> PostCar(Car car)
+        public async Task<string> PostCar(int userId, List<CarsDTO> carsDto)
         {
-            _context.Car.Add(car);
-            await _context.SaveChangesAsync();
+            foreach (var car in carsDto)
+            {
+                Car newCar = new Car
+                {
+                    UserId = userId,
+                    LicensePlate = car.licensePlate,
+                    RegisterDate = DateTime.Now,
+                    IsActive = car.isActive
 
-            return CreatedAtAction("GetCar", new { id = car.CarId }, car);
+                };
+                _context.Car.Add(newCar);
+            };
+            
+
+            try
+            {
+                // 儲存所有新增的車牌資料
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return $"新增失敗: {ex.Message}";
+            }
+
+            return "新增成功";
         }
 
         // DELETE: api/Cars_/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCar(int id)
-        {
-            var car = await _context.Car.FindAsync(id);
-            if (car == null)
-            {
-                return NotFound();
-            }
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteCar(int id)
+        //{
+        //    var car = await _context.Car.FindAsync(id);
+        //    if (car == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            _context.Car.Remove(car);
-            await _context.SaveChangesAsync();
+        //    _context.Car.Remove(car);
+        //    await _context.SaveChangesAsync();
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
 
         private bool CarExists(int id)
         {
