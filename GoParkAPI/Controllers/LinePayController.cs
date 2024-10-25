@@ -136,6 +136,10 @@ namespace GoParkAPI.Controllers
         [HttpPost("ValidateDay")]
         public async Task<IActionResult> ValidateDayPayment([FromBody] PaymentValidationDayDto request)
         {
+            if (request == null || request.lotId <= 0 || request.Amount < 0)
+            {          
+                return BadRequest(new { message = "無效的請求資料。" });
+            }
             try
             {
                 bool isValid = await _linePayService.ValidateDayMoney(request.lotId, request.Amount);

@@ -174,9 +174,45 @@ namespace GoParkAPI.Services
             }
             
         }
-
-
-
         //------------------ 檢測預定金額和每個小時的時間是否相符結束 ---------------------------
+
+
+
+
+
+
+
+        //-------------------------------------------------------------------------------------------------
+
+
+        //public async Task<PaymentResponseDto> SendPaymentRequest(PaymentRequestDto dto)
+        //{
+        //    var json = _jsonProvider.Serialize(dto);
+        //    var nonce = Guid.NewGuid().ToString();
+        //    var requestUrl = "/v3/payments/request";
+        //    var signature = SignatureProvider.HMACSHA256(
+        //        channelSecretKey, channelSecretKey + requestUrl + json + nonce);
+
+        //    var request = new HttpRequestMessage(HttpMethod.Post, linePayBaseApiUrl + requestUrl)
+        //    {
+        //        Content = new StringContent(json, Encoding.UTF8, "application/json")
+        //    };
+
+        //    AddLinePayHeaders(request, nonce, signature);
+
+        //    var response = await _client.SendAsync(request);
+
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        throw new Exception($"LinePay API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
+        //    }
+
+        //    var responseContent = await response.Content.ReadAsStringAsync();
+        //    var paymentResponse = _jsonProvider.Deserialize<PaymentResponseDto>(responseContent);
+
+        //    // 返回解析的回應資料
+        //    return paymentResponse;
+        //}
+
     }
 }
