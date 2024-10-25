@@ -2,7 +2,9 @@
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using MailKit.Search;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 using System.Text;
 
 namespace GoParkAPI.Services
@@ -31,30 +33,6 @@ namespace GoParkAPI.Services
             request.Headers.Add("X-LINE-Authorization", signature);
         }
 
-        //public async Task<PaymentResponseDto> SendPaymentRequest(PaymentRequestDto dto)
-        //{
-        //    var json = _jsonProvider.Serialize(dto);
-        //    var nonce = Guid.NewGuid().ToString();
-        //    var requestUrl = "/v3/payments/request";
-        //    var signature = SignatureProvider.HMACSHA256(channelSecretKey, channelSecretKey + requestUrl + json + nonce);
-
-        //    var request = new HttpRequestMessage(HttpMethod.Post, linePayBaseApiUrl + requestUrl)
-        //    {
-        //        Content = new StringContent(json, Encoding.UTF8, "application/json")
-        //    };
-
-        //    AddLinePayHeaders(request, nonce, signature);
-
-        //    var response = await _client.SendAsync(request);
-
-
-        //    if (!response.IsSuccessStatusCode)
-        //    {
-        //        throw new Exception($"LinePay API Error: {response.StatusCode} - {await response.Content.ReadAsStringAsync()}");
-        //    }
-
-        //    return _jsonProvider.Deserialize<PaymentResponseDto>(await response.Content.ReadAsStringAsync());
-        //}
 
         public async Task<PaymentResponseDto> SendPaymentRequest(PaymentRequestDto dto)
         {
@@ -123,28 +101,7 @@ namespace GoParkAPI.Services
         }
 
         //--------------------- 月租方案開始 ------------------------
-        //public MonthlyRental MapDtoToModel(PaymentRequestDto dto, string transactionId)
-        //{
-        //    int rentalMonths = dto.PlanId switch
-        //    {
-        //        "oneMonth" => 1,
-        //        "threeMonths" => 3,
-        //        "sixMonths" => 6,
-        //        "twelveMonths" => 12,
-        //        _ => throw new ArgumentException("Invalid PlanId")
-        //    };
 
-        //    return new MonthlyRental
-        //    {
-        //        CarId = 1,
-        //        LotId = 1,
-        //        StartDate = DateTime.Today,
-        //        EndDate = DateTime.Today.AddMonths(rentalMonths),
-        //        Amount = dto.Amount,
-        //        PaymentStatus = false,
-        //        TransactionId = transactionId // 設置 TransactionId
-        //    };
-        //}
         public MonthlyRental MapDtoToModel(PaymentRequestDto dto)
         {
             // 根據方案 ID 動態設置結束日期
@@ -172,6 +129,8 @@ namespace GoParkAPI.Services
         //--------------------- 月租方案結束 ------------------------
 
 
+
+
         //------------------ 檢測月租方案是否相符開始 ---------------------
         public bool ValidatePayment(string planId, decimal paidAmount)
         {
@@ -192,5 +151,32 @@ namespace GoParkAPI.Services
             return true; // 驗證通過
         }
         //------------------ 檢測月租方案是否相符結束 ---------------------
+
+        //------------------ 檢測預定金額和每個小時的時間是否相符開始 ---------------------------
+
+        public async Task<bool> ValidateDayMoney(int lotId,int weekDay)
+        {
+            var park = await _context.ParkingLots
+                .FirstOrDefaultAsync(r => r.LotId == lotId);
+            if(park ==null)
+            {
+                throw new Exception("此停車場並不存在");
+          
+            }
+            if(park.WeekdayRate != weekDay)
+            {
+                Console.WriteLine($"{park.LotName}的金額比對錯誤");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+            
+        }
+
+
+
+        //------------------ 檢測預定金額和每個小時的時間是否相符結束 ---------------------------
     }
 }
