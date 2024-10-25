@@ -50,11 +50,12 @@ namespace GoParkAPI.Controllers
                     lotName = res.Lot.LotName,
                     licensePlate = res.Car.LicensePlate,
                     isCanceled = res.IsCanceled,
-                    isOverdue = res.IsOverdue,
+                    isOverdue = res.IsOverdue, //判斷是否逾時(違規)
                     isFinish = res.IsFinish,
                     latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
-                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault()
-
+                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault(),
+                    lotId = res.Lot.LotId, //為了要導入到預定頁面需要停車場id
+                    validUntil = res.ValidUntil
                 });
             if (reservations == null)
             {
@@ -84,6 +85,7 @@ namespace GoParkAPI.Controllers
                     isFinish = res.IsFinish,
                     latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
                     longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault()
+
                 });
 
             if (reservations == null)
