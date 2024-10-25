@@ -26,7 +26,8 @@ namespace GoParkAPI.Controllers
 
 
 
-        // 新增 ValidatePayment 方法，使用 Service 進行驗證
+        // ------------------------ 驗證月租方案是否相符開始 -------------------------------
+
         [HttpPost("Validate")]
         public IActionResult ValidatePayment([FromBody] PaymentValidationDto request)
         {
@@ -55,6 +56,9 @@ namespace GoParkAPI.Controllers
             }
         }
 
+        // ------------------------ 驗證月租方案是否相符結束 -------------------------------
+
+        // ------------------------ 發送月租付款申請開始 -------------------------------
 
         [HttpPost("Create")]
         public async Task<IActionResult> CreatePayment([FromBody] PaymentRequestDto dto)
@@ -88,6 +92,10 @@ namespace GoParkAPI.Controllers
 
         }
 
+        // ------------------------ 發送月租付款申請結束 -------------------------------
+
+        // ------------------------ 完成月租付並建立付款記錄開始 -------------------------------
+
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
@@ -104,18 +112,76 @@ namespace GoParkAPI.Controllers
             // 更新 PaymentStatus 為 true
             rentalRecord.PaymentStatus = true;
 
-            // 保存變更
-            await _context.SaveChangesAsync();
+            var dealRecord = new DealRecord
+            {
+                CarId = 1,  // 改為從 DTO 接收 CarId
+                Amount = rentalRecord.Amount,
+                PaymentTime = DateTime.Now,
+                ParkType = "monthlyRental"
+            };
 
+            // 將交易記錄添加到資料庫
+            await _context.DealRecord.AddAsync(dealRecord);
+
+            await _context.SaveChangesAsync();
             // 回傳成功訊息
             return Ok(new { success = true, message = "支付狀態已更新", data = rentalRecord });
         }
 
+        // ------------------------ 完成月租付並建立付款記錄結束 -------------------------------
+
+
+        // ------------------------ 驗證預約停車的金額是否相符開始 -------------------------------
+
+        [HttpPost("ValidateDay")]
+        public async Task<IActionResult> ValidateDayPayment([FromBody] PaymentValidationDayDto request)
+        {
+            if (request == null || request.lotId <= 0 || request.Amount < 0)
+            {          
+                return BadRequest(new { message = "無效的請求資料。" });
+            }
+            try
+            {
+                bool isValid = await _linePayService.ValidateDayMoney(request.lotId, request.Amount);
+
+                if (!isValid)
+                {
+                    return BadRequest(new { message = "方案或金額驗證失敗。" });
+                }
+                Console.WriteLine("金額正確通過");
+                return Ok(new { isValid = true });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"伺服器錯誤: {ex.Message}");
+                return StatusCode(500, new { message = $"伺服器錯誤: {ex.Message}" });
+            }
+        }
+
+        // ------------------------ 驗證預約停車的金額是否相符結束 -------------------------------
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //-------------------------------------------------------------------------------------------
 
         [HttpPost("Confirm")]
         public async Task<PaymentConfirmResponseDto> ConfirmPayment([FromQuery] string transactionId, [FromQuery] string orderId, PaymentConfirmDto dto)
