@@ -12,7 +12,7 @@
 
         public DateTime StartTime { get; set; } //預約進場時間
 
-        public DateTime? ValidUntil { get; set; }  //預約進場時間+時限 //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
+        public DateTime? validUntil { get; set; }  //預約進場時間+時限 //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
 
         public bool PaymentStatus { get; set; }
        
