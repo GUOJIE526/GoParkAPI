@@ -185,7 +185,6 @@ public partial class EasyParkContext : DbContext
 
             entity.Property(e => e.ApplyId).HasColumnName("apply_id");
             entity.Property(e => e.ApplyDate)
-                .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("apply_date");
             entity.Property(e => e.ApplyStatus)

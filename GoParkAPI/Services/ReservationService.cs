@@ -22,10 +22,16 @@ namespace GoParkAPI.Services
 
             var parkingLots = await _context.ParkingLots.FirstOrDefaultAsync(lot => lot.LotName == resDTO.lotName) ?? throw new Exception("無效的停車場");
 
+            if(parkingLots.ResDeposit <= 0)
+            {
+                throw new Exception("該停車場不提供預約服務");
+            }
+
             if(parkingLots.ValidSpace <= 0)
             {
                 throw new Exception("車位已滿");
             }
+            
 
             //計算Valid_until
             DateTime startTime = (DateTime)resDTO.StartTime;
@@ -43,7 +49,7 @@ namespace GoParkAPI.Services
 
             _context.Reservation.Add(newRes);
 
-            parkingLots.ValidSpace -= 1;//更新剩餘車位
+            //parkingLots.ValidSpace -= 1;//更新剩餘車位
             await _context.SaveChangesAsync();
             return newRes;
         }

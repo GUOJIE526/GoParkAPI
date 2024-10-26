@@ -11,7 +11,7 @@ public partial class MonApplyList
 
     public int LotId { get; set; }
 
-    public DateTime ApplyDate { get; set; }
+    public DateTime? ApplyDate { get; set; }
 
     public string ApplyStatus { get; set; } = null!;
 

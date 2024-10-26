@@ -164,6 +164,24 @@ namespace GoParkAPI.Controllers
             }
             catch (Exception ex)
             {
+                // 捕捉所有異常並返回自訂錯誤訊息
+                if (ex.Message.Contains("不提供預約服務"))
+                {
+                    return Ok(new { Message = "該停車場不提供預約服務", Success = false });
+                }
+                else if (ex.Message.Contains("車位已滿"))
+                {
+                    return Ok(new { Message = "車位已滿, 無法進行預約", Success = false });
+                }
+                else if (ex.Message.Contains("無效的停車場"))
+                {
+                    return Ok(new { Message = "無效的停車場",  Success = false});
+                }
+                else if (ex.Message.Contains("該車牌不屬於當前用戶"))
+                {
+                    return Ok(new { Message = "該車牌不屬於當前用戶", Succes = false });
+                }
+
                 // 捕捉所有異常並返回具體錯誤訊息
                 return StatusCode(500, new { Message = "伺服器內部錯誤", Detail = ex.Message });
             }
