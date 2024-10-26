@@ -100,81 +100,81 @@ namespace GoParkAPI.Services
             await Task.CompletedTask;
         }
 
-        //--------------------- 月租方案開始 ------------------------
+        ////--------------------- 月租方案開始 ------------------------
 
-        public MonthlyRental MapDtoToModel(PaymentRequestDto dto)
-        {
-            // 根據方案 ID 動態設置結束日期
-            int rentalMonths = dto.PlanId switch
-            {
-                "oneMonth" => 1,
-                "threeMonths" => 3,
-                "sixMonths" => 6,
-                "twelveMonths" => 12,
-                _ => throw new ArgumentException("Invalid PlanId")
-            };
+        //public MonthlyRental MapDtoToModel(PaymentRequestDto dto)
+        //{
+        //    // 根據方案 ID 動態設置結束日期
+        //    int rentalMonths = dto.PlanId switch
+        //    {
+        //        "oneMonth" => 1,
+        //        "threeMonths" => 3,
+        //        "sixMonths" => 6,
+        //        "twelveMonths" => 12,
+        //        _ => throw new ArgumentException("Invalid PlanId")
+        //    };
 
-            return new MonthlyRental
-            {
-                CarId = 1,
-                LotId = 1,
-                StartDate = DateTime.Today,
-                EndDate = DateTime.Today.AddMonths(rentalMonths),
-                Amount = dto.Amount,
-                PaymentStatus = false,
-                TransactionId = dto.OrderId
-            };
+        //    return new MonthlyRental
+        //    {
+        //        CarId = 1,
+        //        LotId = 1,
+        //        StartDate = DateTime.Today,
+        //        EndDate = DateTime.Today.AddMonths(rentalMonths),
+        //        Amount = dto.Amount,
+        //        PaymentStatus = false,
+        //        TransactionId = dto.OrderId
+        //    };
 
-        }
-        //--------------------- 月租方案結束 ------------------------
-
-
+        //}
+        ////--------------------- 月租方案結束 ------------------------
 
 
-        //------------------ 檢測月租方案是否相符開始 ---------------------
-        public bool ValidatePayment(string planId, decimal paidAmount)
-        {
-            if (!PlanData.Plans.TryGetValue(planId, out var plan))
-            {
-                Console.WriteLine($"方案ID不存在: {planId}");
-                return false; // 方案 ID 不存在
-            }
 
-            Console.WriteLine($"查找到的方案: {plan.Name}, 金額: {plan.Price}");
 
-            if (plan.Price != paidAmount)
-            {
-                Console.WriteLine("金額不符。");
-                return false;
-            }
+        ////------------------ 檢測月租方案是否相符開始 ---------------------
+        //public bool ValidatePayment(string planId, decimal paidAmount)
+        //{
+        //    if (!PlanData.Plans.TryGetValue(planId, out var plan))
+        //    {
+        //        Console.WriteLine($"方案ID不存在: {planId}");
+        //        return false; // 方案 ID 不存在
+        //    }
 
-            return true; // 驗證通過
-        }
-        //------------------ 檢測月租方案是否相符結束 ---------------------
+        //    Console.WriteLine($"查找到的方案: {plan.Name}, 金額: {plan.Price}");
 
-        //------------------ 檢測預定金額和每個小時的時間是否相符開始 ---------------------------
+        //    if (plan.Price != paidAmount)
+        //    {
+        //        Console.WriteLine("金額不符。");
+        //        return false;
+        //    }
 
-        public async Task<bool> ValidateDayMoney(int lotId,int weekDay)
-        {
-            var park = await _context.ParkingLots
-                .FirstOrDefaultAsync(r => r.LotId == lotId);
-            if(park ==null)
-            {
-                throw new Exception("此停車場並不存在");
+        //    return true; // 驗證通過
+        //}
+        ////------------------ 檢測月租方案是否相符結束 ---------------------
+
+        ////------------------ 檢測預定金額和每個小時的時間是否相符開始 ---------------------------
+
+        //public async Task<bool> ValidateDayMoney(int lotId,int weekDay)
+        //{
+        //    var park = await _context.ParkingLots
+        //        .FirstOrDefaultAsync(r => r.LotId == lotId);
+        //    if(park ==null)
+        //    {
+        //        throw new Exception("此停車場並不存在");
           
-            }
-            if(park.WeekdayRate != weekDay)
-            {
-                Console.WriteLine($"{park.LotName}的金額比對錯誤");
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+        //    }
+        //    if(park.WeekdayRate != weekDay)
+        //    {
+        //        Console.WriteLine($"{park.LotName}的金額比對錯誤");
+        //        return false;
+        //    }
+        //    else
+        //    {
+        //        return true;
+        //    }
             
-        }
-        //------------------ 檢測預定金額和每個小時的時間是否相符結束 ---------------------------
+        //}
+        ////------------------ 檢測預定金額和每個小時的時間是否相符結束 ---------------------------
 
 
 

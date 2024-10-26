@@ -15,13 +15,15 @@ namespace GoParkAPI.Controllers
     public class LinePayController : ControllerBase
     {
         private readonly LinePayService _linePayService;
+        private readonly MyPayService _myPayService;
         private readonly EasyParkContext _context;
         private readonly MailService _sentmail;
-        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail)
+        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail , MyPayService myPayService)
         {
             _linePayService = linePayService;
             _context = context;
             _sentmail = sentmail;
+            _myPayService = myPayService;
         }
 
 
@@ -29,18 +31,18 @@ namespace GoParkAPI.Controllers
         // ------------------------ 驗證月租方案是否相符開始 -------------------------------
 
         [HttpPost("Validate")]
-        public IActionResult ValidatePayment([FromBody] PaymentValidationDto request)
+        public async Task<IActionResult> ValidatePayment([FromBody] PaymentValidationDto dto)
         {
             try
             {
-                // 驗證資料是否有效
-                if (string.IsNullOrEmpty(request.PlanId) || request.Amount <= 0)
+                // 驗證基本資料
+                if (dto.LotId <=0 || string.IsNullOrEmpty(dto.PlanId) || dto.Amount <= 0)
                 {
-                    return BadRequest(new { message = "無效的方案 ID 或金額。" });
+                    return BadRequest(new { message = "無效的停車場 ID、方案 ID 或金額。" });
                 }
 
                 // 呼叫服務層進行驗證
-                bool isValid = _linePayService.ValidatePayment(request.PlanId, request.Amount);
+                bool isValid = await _myPayService.ValidatePayment(dto.LotId, dto.PlanId, dto.Amount);
 
                 if (!isValid)
                 {
@@ -69,7 +71,7 @@ namespace GoParkAPI.Controllers
                 var paymentResponse = await _linePayService.SendPaymentRequest(dto);
 
                 // 將 DTO 映射為 MonthlyRental 模型
-                MonthlyRental rentalRecord = _linePayService.MapDtoToModel(dto);
+                MonthlyRental rentalRecord = _myPayService.MapDtoToModel(dto);
 
                 // 將租賃記錄新增到資料庫
                 await _context.MonthlyRental.AddAsync(rentalRecord);
@@ -142,7 +144,7 @@ namespace GoParkAPI.Controllers
             }
             try
             {
-                bool isValid = await _linePayService.ValidateDayMoney(request.lotId, request.Amount);
+                bool isValid = await _myPayService.ValidateDayMoney(request.lotId, request.Amount);
 
                 if (!isValid)
                 {
