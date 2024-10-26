@@ -51,7 +51,7 @@ namespace GoParkAPI.Controllers
                     licensePlate = record.Car.LicensePlate,
                     entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
-                    //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                    totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
                 });
             if (parkingRecords == null)
@@ -78,7 +78,7 @@ namespace GoParkAPI.Controllers
                     licensePlate = record.Car.LicensePlate,
                     entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
-                    //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                    totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
                 });
 
