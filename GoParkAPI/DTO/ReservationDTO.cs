@@ -10,7 +10,7 @@
 
         public string licensePlate { get; set; } = null!;
 
-        public DateTime StartTime { get; set; } //預約進場時間
+        public DateTime startTime { get; set; } //預約進場時間
 
         public DateTime? validUntil { get; set; }  //預約進場時間+時限 //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
 

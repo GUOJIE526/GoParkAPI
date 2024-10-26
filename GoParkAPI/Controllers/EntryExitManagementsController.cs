@@ -24,7 +24,7 @@ namespace GoParkAPI.Controllers
         //先抓出該用戶註冊的車牌
         private async Task<List<string>> GetUserCars(int userId)
         {
-            return await _context.Car
+            return await _context.Cars
                 .Where(car => car.UserId == userId)
                 .Select(car => car.LicensePlate)
                 .ToListAsync();
@@ -39,7 +39,7 @@ namespace GoParkAPI.Controllers
             var userCars = await GetUserCars(userId);
 
             //篩選該用戶車牌的預訂資料
-            var parkingRecords = _context.EntryExitManagement
+            var parkingRecords = _context.EntryExitManagements
                 .Where(record => userCars.Contains(record.Car.LicensePlate)) // 比對車牌號碼
                 .Where(record => string.IsNullOrEmpty(licensePlate) || record.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
                 .Where(record => record.Parktype == "reservation")  //只顯示預定的停車紀錄，月租不顯示
@@ -69,7 +69,7 @@ namespace GoParkAPI.Controllers
             var userCars = await GetUserCars(userId);
 
             // 根據停車場名稱模糊查詢停車紀錄
-            var parkingRecords = _context.EntryExitManagement
+            var parkingRecords = _context.EntryExitManagements
                 .Where(record => userCars.Contains(record.Car.LicensePlate) && record.Lot.LotName.Contains(lotName))
                 .Select(record => new EntryExitManagementDTO
                 {
@@ -95,7 +95,7 @@ namespace GoParkAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ParkingDetailDTO> GetEntryExitDetail(int id)
         {
-            var parkingDetail = await _context.EntryExitManagement
+            var parkingDetail = await _context.EntryExitManagements
                 .Where(record => record.EntryexitId == id)
                 .Select(record => new ParkingDetailDTO
                 {
@@ -201,7 +201,7 @@ namespace GoParkAPI.Controllers
 
         private bool EntryExitManagementExists(int id)
         {
-            return _context.EntryExitManagement.Any(e => e.EntryexitId == id);
+            return _context.EntryExitManagements.Any(e => e.EntryexitId == id);
         }
     }
 }

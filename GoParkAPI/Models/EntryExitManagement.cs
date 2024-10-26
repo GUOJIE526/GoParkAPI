@@ -17,15 +17,15 @@ public partial class EntryExitManagement
 
     public DateTime EntryTime { get; set; }
 
-    public DateTime LicensePlateKeyinTime { get; set; }
+    public DateTime? LicensePlateKeyinTime { get; set; }
 
-    public int Amount { get; set; }
+    public int? Amount { get; set; }
 
     public DateTime? PaymentTime { get; set; }
 
     public bool PaymentStatus { get; set; }
 
-    public DateTime ValidTime { get; set; }
+    public DateTime? ValidTime { get; set; }
 
     public DateTime? ExitTime { get; set; }
 
@@ -33,5 +33,5 @@ public partial class EntryExitManagement
 
     public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLots Lot { get; set; } = null!;
+    public virtual ParkingLot Lot { get; set; } = null!;
 }

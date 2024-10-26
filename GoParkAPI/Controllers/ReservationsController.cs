@@ -25,7 +25,7 @@ namespace GoParkAPI.Controllers
         //先抓出該用戶註冊的車牌
         private async Task<List<string>> GetUserCars(int userId)
         {
-            return await _context.Car
+            return await _context.Cars
                 .Where(car => car.UserId == userId)
                 .Select(car => car.LicensePlate)
                 .ToListAsync();
@@ -40,7 +40,7 @@ namespace GoParkAPI.Controllers
             var userCars = await GetUserCars(userId);
 
             //篩選該用戶車牌的預訂資料
-            var reservations = _context.Reservation
+            var reservations = _context.Reservations
                 .Where(res => userCars.Contains(res.Car.LicensePlate)) // 比對車牌號碼
                 .Where(res => string.IsNullOrEmpty(licensePlate) || res.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
                 .Select(res => new ReservationDTO
@@ -49,13 +49,16 @@ namespace GoParkAPI.Controllers
                     resTime = (DateTime)res.ResTime,
                     lotName = res.Lot.LotName,
                     licensePlate = res.Car.LicensePlate,
+                    startTime = res.StartTime,
+                    validUntil = res.ValidUntil,  //還在進行中的預定要顯示
+                    PaymentStatus =res.PaymentStatus,
                     isCanceled = res.IsCanceled,
                     isOverdue = res.IsOverdue, //判斷是否逾時(違規)
                     isFinish = res.IsFinish,
                     latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
                     longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault(),
                     lotId = res.Lot.LotId, //為了要導入到預定頁面需要停車場id
-                    validUntil = res.ValidUntil
+                    
                 });
             if (reservations == null)
             {
@@ -70,9 +73,10 @@ namespace GoParkAPI.Controllers
         {
             //根據 userId抓出用戶的車牌號碼
             var userCars = await GetUserCars(userId);
+           
 
             // 根據停車場名稱模糊查詢訂單
-            var reservations = _context.Reservation
+            var reservations = _context.Reservations
                 .Where(res => userCars.Contains(res.Car.LicensePlate) && res.Lot.LotName.Contains(lotName))
                 .Select(res => new ReservationDTO
                 {
@@ -93,6 +97,79 @@ namespace GoParkAPI.Controllers
                 return null;
             }
             return reservations;
+        }
+
+        //篩選預訂狀態(完成、取消、逾時)
+        [HttpGet("filter")]
+        public async Task<IEnumerable<ReservationDTO>> reservationFilter(int userId, string filter)
+        {
+            //根據 userId抓出用戶的車牌號碼
+            var userCars = await GetUserCars(userId);
+            IQueryable<Reservation> res = null;
+
+            switch (filter)
+            {
+                case "isCompleted":
+                    // 返回已使用的優惠券
+                    res = _context.Reservations
+                        .Where(res => userCars.Contains(res.Car.LicensePlate) && res.IsFinish && !res.IsOverdue  && !res.IsCanceled);
+                    break;
+                case "isCanceled":
+                    res = _context.Reservations
+                        .Where(res => userCars.Contains(res.Car.LicensePlate) && res.IsCanceled == true);
+                    break;
+                case "isOverDue":
+                    res= _context.Reservations
+                        .Where(res => userCars.Contains(res.Car.LicensePlate) && res.IsOverdue);
+                    break;
+            };
+            if (res == null){
+                return null;
+            }
+            return res.Select(res => new ReservationDTO
+            {
+                resId = res.ResId,
+                resTime = (DateTime)res.ResTime,
+                lotName = res.Lot.LotName,
+                licensePlate = res.Car.LicensePlate,
+                startTime = res.StartTime,
+                validUntil = res.ValidUntil,  //還在進行中的預定要顯示
+                PaymentStatus = res.PaymentStatus,
+                isCanceled = res.IsCanceled,
+                isOverdue = res.IsOverdue, //判斷是否逾時(違規)
+                isFinish = res.IsFinish,
+                latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
+                longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault(),
+                lotId = res.Lot.LotId, //為了要導入到預定頁面需要停車場id
+            });
+        }
+
+
+        //取消預訂(isCancel和isFinish都要變)
+        //PUT: api/Reservations/5
+        [HttpPut("{id}")]
+        public async Task<string> PutReservation(int id)
+        {
+            var updateRes = await _context.Reservations.FindAsync(id);
+            if (updateRes == null){
+                return "取消預訂失敗，查無此預訂資料";
+            }
+            else
+            {
+                updateRes.IsCanceled =true;
+                updateRes.IsFinish = true;  //要設為完成，取消會顯示在前端已結案區塊
+            };
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return "已取消預訂";
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return "取消預訂失敗";
+            }
+
         }
 
         [HttpGet("GetLotsInfo")]
@@ -126,7 +203,7 @@ namespace GoParkAPI.Controllers
         [HttpGet("GetUserCarPlate")]
         public async Task<ActionResult<List<Car>>> GetUserCarPlate(int userId)
         {
-            var userCarPlate = await _context.Car.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
+            var userCarPlate = await _context.Cars.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
             if (userCarPlate.Count == 0)
             {
                 return NotFound(new { Message = "無任何車輛" });
@@ -147,7 +224,7 @@ namespace GoParkAPI.Controllers
                     return BadRequest(new { Message = "無法取得用戶ID" });
                 }
 
-                var userCar = await _context.Car.Where(c => c.UserId == userId)
+                var userCar = await _context.Cars.Where(c => c.UserId == userId)
                                     .Select(c => c.LicensePlate).ToListAsync();
                 if (!userCar.Contains(resDTO.licensePlate))
                 {
@@ -168,19 +245,18 @@ namespace GoParkAPI.Controllers
                 // 創建新的預約
                 var newRes = new Reservation
                 {
-                    CarId = _context.Car.FirstOrDefault(car => car.LicensePlate == resDTO.licensePlate).CarId,
+                    CarId = _context.Cars.FirstOrDefault(car => car.LicensePlate == resDTO.licensePlate).CarId,
                     LotId = parkingLot.LotId,
                     ResTime = resDTO.resTime,
-                    Amount = 3000,
                     IsCanceled = false,
                     IsOverdue = false,  //TO 洪爸 這裡需改成不給值 (by 珊)               
                     IsFinish = false
                 };
 
-                _context.Reservation.Add(newRes);
+                _context.Reservations.Add(newRes);
                 parkingLot.ValidSpace -= 1; // 預約成功扣減1個車位
                 await _context.SaveChangesAsync();
-                var result = new { Message = "預約成功", newRes = new { newRes.CarId , newRes.LotId, newRes.ResTime, newRes.Amount} };
+                var result = new { Message = "預約成功", newRes = new { newRes.CarId , newRes.LotId, newRes.ResTime} };
                 return Ok(result);
             
             }
@@ -194,7 +270,7 @@ namespace GoParkAPI.Controllers
 
         private bool ReservationExists(int id)
         {
-            return _context.Reservation.Any(e => e.ResId == id);
+            return _context.Reservations.Any(e => e.ResId == id);
         }
     }
 

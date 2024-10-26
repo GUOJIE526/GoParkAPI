@@ -25,9 +25,9 @@ public partial class Customer
 
     public string? Token { get; set; }
 
-    public virtual ICollection<Car> Car { get; set; } = new List<Car>();
+    public virtual ICollection<Car> Cars { get; set; } = new List<Car>();
 
-    public virtual ICollection<Coupon> Coupon { get; set; } = new List<Coupon>();
+    public virtual ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();
 
-    public virtual ICollection<Survey> Survey { get; set; } = new List<Survey>();
+    public virtual ICollection<Survey> Surveys { get; set; } = new List<Survey>();
 }

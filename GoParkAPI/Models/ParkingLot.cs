@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GoParkAPI.Models;
 
-public partial class ParkingLots
+public partial class ParkingLot
 {
     public int LotId { get; set; }
 
@@ -31,6 +31,8 @@ public partial class ParkingLots
 
     public int HolidayRate { get; set; }
 
+    public int ResDeposit { get; set; }
+
     public int MonRentalRate { get; set; }
 
     public string? OpendoorTime { get; set; }
@@ -43,15 +45,17 @@ public partial class ParkingLots
 
     public int ValidSpace { get; set; }
 
-    public virtual ICollection<EntryExitManagement> EntryExitManagement { get; set; } = new List<EntryExitManagement>();
+    public int ResOverdueValidTimeSet { get; set; }
 
-    public virtual ICollection<MonApplyList> MonApplyList { get; set; } = new List<MonApplyList>();
+    public virtual ICollection<EntryExitManagement> EntryExitManagements { get; set; } = new List<EntryExitManagement>();
 
-    public virtual ICollection<MonthlyRental> MonthlyRental { get; set; } = new List<MonthlyRental>();
+    public virtual ICollection<MonApplyList> MonApplyLists { get; set; } = new List<MonApplyList>();
 
-    public virtual ICollection<ParkingLotImages> ParkingLotImages { get; set; } = new List<ParkingLotImages>();
+    public virtual ICollection<MonthlyRental> MonthlyRentals { get; set; } = new List<MonthlyRental>();
 
-    public virtual ICollection<ParkingSlot> ParkingSlot { get; set; } = new List<ParkingSlot>();
+    public virtual ICollection<ParkingLotImage> ParkingLotImages { get; set; } = new List<ParkingLotImage>();
 
-    public virtual ICollection<Reservation> Reservation { get; set; } = new List<Reservation>();
+    public virtual ICollection<ParkingSlot> ParkingSlots { get; set; } = new List<ParkingSlot>();
+
+    public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }

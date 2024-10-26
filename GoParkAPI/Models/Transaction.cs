@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GoParkAPI.Models;
 
-public partial class Transactions
+public partial class Transaction
 {
     public int TranId { get; set; }
 
@@ -25,5 +25,5 @@ public partial class Transactions
 
     public virtual Coupon? Coupon { get; set; }
 
-    public virtual Orders Ord { get; set; } = null!;
+    public virtual Order Ord { get; set; } = null!;
 }

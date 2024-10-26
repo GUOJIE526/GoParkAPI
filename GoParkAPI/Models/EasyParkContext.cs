@@ -15,41 +15,44 @@ public partial class EasyParkContext : DbContext
     {
     }
 
-    public virtual DbSet<Car> Car { get; set; }
+    public virtual DbSet<Car> Cars { get; set; }
 
-    public virtual DbSet<Coupon> Coupon { get; set; }
+    public virtual DbSet<Coupon> Coupons { get; set; }
 
-    public virtual DbSet<Customer> Customer { get; set; }
+    public virtual DbSet<Customer> Customers { get; set; }
 
-    public virtual DbSet<DealRecord> DealRecord { get; set; }
+    public virtual DbSet<DealRecord> DealRecords { get; set; }
 
-    public virtual DbSet<EntryExitManagement> EntryExitManagement { get; set; }
+    public virtual DbSet<EntryExitManagement> EntryExitManagements { get; set; }
 
-    public virtual DbSet<MonApplyList> MonApplyList { get; set; }
+    public virtual DbSet<MonApplyList> MonApplyLists { get; set; }
 
-    public virtual DbSet<MonthlyRental> MonthlyRental { get; set; }
+    public virtual DbSet<MonthlyRental> MonthlyRentals { get; set; }
 
-    public virtual DbSet<Orders> Orders { get; set; }
+    public virtual DbSet<Order> Orders { get; set; }
 
-    public virtual DbSet<ParkingLotImages> ParkingLotImages { get; set; }
+    public virtual DbSet<ParkingLot> ParkingLots { get; set; }
 
-    public virtual DbSet<ParkingLots> ParkingLots { get; set; }
+    public virtual DbSet<ParkingLotImage> ParkingLotImages { get; set; }
 
-    public virtual DbSet<ParkingSlot> ParkingSlot { get; set; }
+    public virtual DbSet<ParkingSlot> ParkingSlots { get; set; }
 
-    public virtual DbSet<Reservation> Reservation { get; set; }
+    public virtual DbSet<Reservation> Reservations { get; set; }
 
-    public virtual DbSet<Revenue> Revenue { get; set; }
+    public virtual DbSet<Revenue> Revenues { get; set; }
 
-    public virtual DbSet<Survey> Survey { get; set; }
+    public virtual DbSet<Survey> Surveys { get; set; }
 
-    public virtual DbSet<Transactions> Transactions { get; set; }
+    public virtual DbSet<Transaction> Transactions { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Car>(entity =>
         {
-            entity.HasKey(e => e.CarId).HasName("PK__Car__4C9A0DB3C9BE50E7");
+            entity.HasKey(e => e.CarId).HasName("PK__Car__4C9A0DB32F1A377C");
+
+            entity.ToTable("Car");
 
             entity.Property(e => e.CarId).HasColumnName("car_id");
             entity.Property(e => e.IsActive)
@@ -64,14 +67,16 @@ public partial class EasyParkContext : DbContext
                 .HasColumnName("register_date");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Car)
+            entity.HasOne(d => d.User).WithMany(p => p.Cars)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Car_User");
         });
 
         modelBuilder.Entity<Coupon>(entity =>
         {
-            entity.HasKey(e => e.CouponId).HasName("PK__Coupon__58CF6389B3B13F35");
+            entity.HasKey(e => e.CouponId).HasName("PK__Coupon__58CF638912881D97");
+
+            entity.ToTable("Coupon");
 
             entity.Property(e => e.CouponId).HasColumnName("coupon_id");
             entity.Property(e => e.CouponCode)
@@ -87,7 +92,7 @@ public partial class EasyParkContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("valid_until");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Coupon)
+            entity.HasOne(d => d.User).WithMany(p => p.Coupons)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_Coupon_User");
@@ -95,7 +100,9 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F0C3A6D09");
+            entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F06D434C9");
+
+            entity.ToTable("Customer");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.BlackCount).HasColumnName("blackCount");
@@ -120,7 +127,9 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<DealRecord>(entity =>
         {
-            entity.HasKey(e => e.DealId).HasName("PK__DealReco__C012A76CEF414B9A");
+            entity.HasKey(e => e.DealId).HasName("PK__DealReco__C012A76C826596D4");
+
+            entity.ToTable("DealRecord");
 
             entity.Property(e => e.DealId).HasColumnName("deal_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -132,7 +141,7 @@ public partial class EasyParkContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("payment_time");
 
-            entity.HasOne(d => d.Car).WithMany(p => p.DealRecord)
+            entity.HasOne(d => d.Car).WithMany(p => p.DealRecords)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_DealRecord");
@@ -141,6 +150,8 @@ public partial class EasyParkContext : DbContext
         modelBuilder.Entity<EntryExitManagement>(entity =>
         {
             entity.HasKey(e => e.EntryexitId).HasName("PK__EntryExi__FD3EA5F6174CE504");
+
+            entity.ToTable("EntryExitManagement");
 
             entity.Property(e => e.EntryexitId).HasColumnName("entryexit_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -168,12 +179,12 @@ public partial class EasyParkContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("valid_time");
 
-            entity.HasOne(d => d.Car).WithMany(p => p.EntryExitManagement)
+            entity.HasOne(d => d.Car).WithMany(p => p.EntryExitManagements)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_EntryExit_Car");
 
-            entity.HasOne(d => d.Lot).WithMany(p => p.EntryExitManagement)
+            entity.HasOne(d => d.Lot).WithMany(p => p.EntryExitManagements)
                 .HasForeignKey(d => d.LotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_EntryExit_Lot");
@@ -181,7 +192,9 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<MonApplyList>(entity =>
         {
-            entity.HasKey(e => e.ApplyId).HasName("PK__MonApply__8260CA82C6807790");
+            entity.HasKey(e => e.ApplyId).HasName("PK__MonApply__8260CA82BFE550FA");
+
+            entity.ToTable("MonApplyList");
 
             entity.Property(e => e.ApplyId).HasColumnName("apply_id");
             entity.Property(e => e.ApplyDate)
@@ -197,12 +210,12 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.LotId).HasColumnName("lot_id");
             entity.Property(e => e.NotificationStatus).HasColumnName("notification_status");
 
-            entity.HasOne(d => d.Car).WithMany(p => p.MonApplyList)
+            entity.HasOne(d => d.Car).WithMany(p => p.MonApplyLists)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MonApplyList_Car");
 
-            entity.HasOne(d => d.Lot).WithMany(p => p.MonApplyList)
+            entity.HasOne(d => d.Lot).WithMany(p => p.MonApplyLists)
                 .HasForeignKey(d => d.LotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MonApplyList_Lot");
@@ -210,7 +223,9 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<MonthlyRental>(entity =>
         {
-            entity.HasKey(e => e.RenId).HasName("PK__MonthlyR__5833C152FA762C76");
+            entity.HasKey(e => e.RenId).HasName("PK__MonthlyR__5833C152264C34E4");
+
+            entity.ToTable("MonthlyRental");
 
             entity.Property(e => e.RenId).HasColumnName("ren_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -225,18 +240,18 @@ public partial class EasyParkContext : DbContext
                 .HasColumnName("start_date");
             entity.Property(e => e.TransactionId).HasMaxLength(50);
 
-            entity.HasOne(d => d.Car).WithMany(p => p.MonthlyRental)
+            entity.HasOne(d => d.Car).WithMany(p => p.MonthlyRentals)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MonthlyRental_Car");
 
-            entity.HasOne(d => d.Lot).WithMany(p => p.MonthlyRental)
+            entity.HasOne(d => d.Lot).WithMany(p => p.MonthlyRentals)
                 .HasForeignKey(d => d.LotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MonthlyRental_Lot");
         });
 
-        modelBuilder.Entity<Orders>(entity =>
+        modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.OrdId).HasName("PK__Orders__DC39D7DF1E7759D7");
 
@@ -258,22 +273,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ReferenceId).HasColumnName("reference_id");
         });
 
-        modelBuilder.Entity<ParkingLotImages>(entity =>
-        {
-            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC9551A02B4EF");
-
-            entity.Property(e => e.ImageId).HasColumnName("image_id");
-            entity.Property(e => e.ImgPath).HasColumnName("imgPath");
-            entity.Property(e => e.ImgTitle).HasColumnName("imgTitle");
-            entity.Property(e => e.LotId).HasColumnName("lot_id");
-
-            entity.HasOne(d => d.Lot).WithMany(p => p.ParkingLotImages)
-                .HasForeignKey(d => d.LotId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_ParkingLotImages_Lot");
-        });
-
-        modelBuilder.Entity<ParkingLots>(entity =>
+        modelBuilder.Entity<ParkingLot>(entity =>
         {
             entity.HasKey(e => e.LotId);
 
@@ -315,16 +315,33 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.WeekdayRate).HasColumnName("weekdayRate");
         });
 
+        modelBuilder.Entity<ParkingLotImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC95514B99E79");
+
+            entity.Property(e => e.ImageId).HasColumnName("image_id");
+            entity.Property(e => e.ImgPath).HasColumnName("imgPath");
+            entity.Property(e => e.ImgTitle).HasColumnName("imgTitle");
+            entity.Property(e => e.LotId).HasColumnName("lot_id");
+
+            entity.HasOne(d => d.Lot).WithMany(p => p.ParkingLotImages)
+                .HasForeignKey(d => d.LotId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ParkingLotImages_Lot");
+        });
+
         modelBuilder.Entity<ParkingSlot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__ParkingS__971A01BB80C91485");
+            entity.HasKey(e => e.SlotId).HasName("PK__ParkingS__971A01BB678175C0");
+
+            entity.ToTable("ParkingSlot");
 
             entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.IsRented).HasColumnName("is_Rented");
             entity.Property(e => e.LotId).HasColumnName("lot_id");
             entity.Property(e => e.SlotNum).HasColumnName("slot_num");
 
-            entity.HasOne(d => d.Lot).WithMany(p => p.ParkingSlot)
+            entity.HasOne(d => d.Lot).WithMany(p => p.ParkingSlots)
                 .HasForeignKey(d => d.LotId)
                 .HasConstraintName("FK_lotName");
         });
@@ -333,8 +350,9 @@ public partial class EasyParkContext : DbContext
         {
             entity.HasKey(e => e.ResId).HasName("PK__Reservat__2090B50D7D0EB7C2");
 
+            entity.ToTable("Reservation");
+
             entity.Property(e => e.ResId).HasColumnName("res_id");
-            entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CarId).HasColumnName("car_id");
             entity.Property(e => e.IsCanceled).HasColumnName("is_canceled");
             entity.Property(e => e.IsFinish).HasColumnName("is_finish");
@@ -353,12 +371,12 @@ public partial class EasyParkContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("valid_until");
 
-            entity.HasOne(d => d.Car).WithMany(p => p.Reservation)
+            entity.HasOne(d => d.Car).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Reservation_Car");
 
-            entity.HasOne(d => d.Lot).WithMany(p => p.Reservation)
+            entity.HasOne(d => d.Lot).WithMany(p => p.Reservations)
                 .HasForeignKey(d => d.LotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Reservation_Lot");
@@ -366,7 +384,9 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Revenue>(entity =>
         {
-            entity.HasKey(e => e.RevenueId).HasName("PK__Revenue__3DF902E9F4C5372A");
+            entity.HasKey(e => e.RevenueId).HasName("PK__Revenue__3DF902E926764228");
+
+            entity.ToTable("Revenue");
 
             entity.Property(e => e.RevenueId).HasColumnName("revenue_id");
             entity.Property(e => e.CreatedTime)
@@ -381,7 +401,9 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Survey>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Survey__3213E83FD161EDA5");
+            entity.HasKey(e => e.Id).HasName("PK__Survey__3213E83F6C15B0C5");
+
+            entity.ToTable("Survey");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.IsReplied).HasColumnName("is_replied");
@@ -399,15 +421,15 @@ public partial class EasyParkContext : DbContext
                 .HasColumnName("submitted_at");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Survey)
+            entity.HasOne(d => d.User).WithMany(p => p.Surveys)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Survey_Customer");
         });
 
-        modelBuilder.Entity<Transactions>(entity =>
+        modelBuilder.Entity<Transaction>(entity =>
         {
-            entity.HasKey(e => e.TranId).HasName("PK__Transact__A67F8A209D223FF6");
+            entity.HasKey(e => e.TranId).HasName("PK__Transact__A67F8A20877F7B45");
 
             entity.Property(e => e.TranId).HasColumnName("tran_id");
             entity.Property(e => e.CouponId).HasColumnName("coupon_id");

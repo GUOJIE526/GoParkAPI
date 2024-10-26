@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace GoParkAPI.Models;
 
-public partial class Orders
+public partial class Order
 {
     public int OrdId { get; set; }
 
-    public string OrdType { get; set; } = null!;
+    public string? OrdType { get; set; }
 
     public int ReferenceId { get; set; }
 
@@ -19,5 +19,5 @@ public partial class Orders
 
     public DateTime CreatedTime { get; set; }
 
-    public virtual ICollection<Transactions> Transactions { get; set; } = new List<Transactions>();
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

@@ -72,7 +72,7 @@ namespace GoParkAPI.Controllers
                 MonthlyRental rentalRecord = _linePayService.MapDtoToModel(dto);
 
                 // 將租賃記錄新增到資料庫
-                await _context.MonthlyRental.AddAsync(rentalRecord);
+                await _context.MonthlyRentals.AddAsync(rentalRecord);
 
                 // 保存變更
                 await _context.SaveChangesAsync();
@@ -100,7 +100,7 @@ namespace GoParkAPI.Controllers
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
             // 根據傳入的 OrderId 比對資料庫中的 TransactionId
-            var rentalRecord = await _context.MonthlyRental
+            var rentalRecord = await _context.MonthlyRentals
                 .FirstOrDefaultAsync(r => r.TransactionId == dto.OrderId);
 
             if (rentalRecord == null)
@@ -121,7 +121,7 @@ namespace GoParkAPI.Controllers
             };
 
             // 將交易記錄添加到資料庫
-            await _context.DealRecord.AddAsync(dealRecord);
+            await _context.DealRecords.AddAsync(dealRecord);
 
             await _context.SaveChangesAsync();
             // 回傳成功訊息
