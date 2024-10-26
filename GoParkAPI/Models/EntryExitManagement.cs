@@ -15,17 +15,17 @@ public partial class EntryExitManagement
 
     public string? LicensePlatePhoto { get; set; }
 
-    public DateTime EntryTime { get; set; }
+    public DateTime? EntryTime { get; set; }
 
-    public DateTime LicensePlateKeyinTime { get; set; }
+    public DateTime? LicensePlateKeyinTime { get; set; }
 
-    public int Amount { get; set; }
+    public int? Amount { get; set; }
 
     public DateTime? PaymentTime { get; set; }
 
     public bool PaymentStatus { get; set; }
 
-    public DateTime ValidTime { get; set; }
+    public DateTime? ValidTime { get; set; }
 
     public DateTime? ExitTime { get; set; }
 

@@ -4,7 +4,9 @@
     {
         public int resId { get; set; }
 
-        public DateTime resTime { get; set; }
+        public DateTime? resTime { get; set; }
+
+        public DateTime? StartTime { get; set; }
 
         public string lotName { get; set; } = null!;
 

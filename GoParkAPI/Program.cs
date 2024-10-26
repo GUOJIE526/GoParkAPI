@@ -47,6 +47,7 @@ builder.Services.AddHttpClient<LinePayService>();
 
 builder.Services.AddScoped<Hash>();
 builder.Services.AddScoped<MailService>();
+builder.Services.AddScoped<MonRentalService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

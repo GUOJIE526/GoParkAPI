@@ -7,7 +7,7 @@ public partial class Orders
 {
     public int OrdId { get; set; }
 
-    public string OrdType { get; set; } = null!;
+    public string? OrdType { get; set; }
 
     public int ReferenceId { get; set; }
 

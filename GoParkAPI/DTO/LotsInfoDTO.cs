@@ -16,6 +16,8 @@
 
         public int SmallCarSpace { get; set; }
 
+        public int MonRentalSpace { get; set; }
+
         public int EtcSpace { get; set; }
 
         public int MotherSpace { get; set; }
@@ -27,6 +29,8 @@
         public int HolidayRate { get; set; }
 
         public int MonRentalRate { get; set; }
+
+        public int ResDeposit { get; set; }
 
         public string Tel { get; set; } = null!;
 

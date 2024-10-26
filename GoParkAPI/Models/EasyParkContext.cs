@@ -280,7 +280,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.LotId)
                 .ValueGeneratedNever()
                 .HasColumnName("lot_id");
-            entity.Property(e => e.BigCarSpace).HasColumnName("bigCarSpace");
+            entity.Property(e => e.MonRentalSpace).HasColumnName("MonRentalSpace");
             entity.Property(e => e.District)
                 .HasMaxLength(50)
                 .HasColumnName("district");
@@ -334,7 +334,6 @@ public partial class EasyParkContext : DbContext
             entity.HasKey(e => e.ResId).HasName("PK__Reservat__2090B50D7D0EB7C2");
 
             entity.Property(e => e.ResId).HasColumnName("res_id");
-            entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CarId).HasColumnName("car_id");
             entity.Property(e => e.IsCanceled).HasColumnName("is_canceled");
             entity.Property(e => e.IsFinish).HasColumnName("is_finish");
