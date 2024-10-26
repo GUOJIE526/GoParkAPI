@@ -84,7 +84,6 @@ namespace GoParkAPI.Controllers
             }
             catch (Exception ex)
             {
-                // 記錄錯誤（建議使用 ILogger）
                 Console.WriteLine($"發生錯誤：{ex.Message}");
 
                 // 回傳錯誤回應
@@ -98,37 +97,20 @@ namespace GoParkAPI.Controllers
 
         // ------------------------ 完成月租付並建立付款記錄開始 -------------------------------
 
+
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 根據傳入的 OrderId 比對資料庫中的 TransactionId
-            var rentalRecord = await _context.MonthlyRental
-                .FirstOrDefaultAsync(r => r.TransactionId == dto.OrderId);
+            var (success, message) = await _myPayService.UpdatePaymentStatusAsync(dto.OrderId);
 
-            if (rentalRecord == null)
+            if (!success)
             {
-                // 如果找不到訂單，回傳 404
-                return NotFound(new { success = false, message = "找不到該訂單" });
+                return NotFound(new { success = false, message });
             }
 
-            // 更新 PaymentStatus 為 true
-            rentalRecord.PaymentStatus = true;
-
-            var dealRecord = new DealRecord
-            {
-                CarId = 1,  // 改為從 DTO 接收 CarId
-                Amount = rentalRecord.Amount,
-                PaymentTime = DateTime.Now,
-                ParkType = "monthlyRental"
-            };
-
-            // 將交易記錄添加到資料庫
-            await _context.DealRecord.AddAsync(dealRecord);
-
-            await _context.SaveChangesAsync();
-            // 回傳成功訊息
-            return Ok(new { success = true, message = "支付狀態已更新", data = rentalRecord });
+            return Ok(new { success = true, message });
         }
+
 
         // ------------------------ 完成月租付並建立付款記錄結束 -------------------------------
 

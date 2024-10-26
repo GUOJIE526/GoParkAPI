@@ -17,8 +17,6 @@ public partial class Reservation
 
     public DateTime? StartTime { get; set; }
 
-    public int Amount { get; set; }
-
     public bool PaymentStatus { get; set; }
 
     public bool IsCanceled { get; set; }

@@ -11,9 +11,9 @@ public partial class MonthlyRental
 
     public int LotId { get; set; }
 
-    public DateTime StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
 
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     public int Amount { get; set; }
 

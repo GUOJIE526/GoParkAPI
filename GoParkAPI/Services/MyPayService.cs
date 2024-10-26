@@ -86,6 +86,7 @@ namespace GoParkAPI.Services
         }
         //------------------ 檢測月租方案是否相符結束 ---------------------
 
+
         //------------------ 檢測預定金額和每個小時的時間是否相符開始 ---------------------------
 
         public async Task<bool> ValidateDayMoney(int lotId,int weekDay)
@@ -110,6 +111,59 @@ namespace GoParkAPI.Services
         }
         //------------------ 檢測預定金額和每個小時的時間是否相符結束 ---------------------------
 
+        //------------------ 月租支付完成表單建立開始---------------------------------
+        public async Task<(bool success, string message)> UpdatePaymentStatusAsync(string orderId)
+        {
+            var rentalRecord = await _context.MonthlyRental
+                .FirstOrDefaultAsync(r => r.TransactionId == orderId);
 
+            if (rentalRecord == null)
+            {
+                return (false, "找不到對應的租賃紀錄");
+            }
+
+            var parkLot = await _context.ParkingLots
+                .FirstOrDefaultAsync(p => p.LotId == rentalRecord.LotId);
+
+            if (parkLot == null)
+            {
+                return (false, "找不到對應的車位");
+            }
+
+            if (parkLot.MonRentalSpace <= 0 || parkLot.ValidSpace <= 0)
+            {
+                return (false, "車位不足，無法更新支付狀態");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                rentalRecord.PaymentStatus = true;
+                parkLot.MonRentalSpace -= 1;
+                parkLot.ValidSpace -= 1;
+
+                var dealRecord = new DealRecord
+                {
+                    CarId = rentalRecord.CarId,
+                    Amount = rentalRecord.Amount,
+                    PaymentTime = DateTime.Now,
+                    ParkType = "monthlyRental"
+                };
+
+                await _context.DealRecord.AddAsync(dealRecord);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return (true, "支付狀態已更新");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine("更新支付狀態失敗");
+                return (false, "更新支付狀態失敗，請稍後再試");
+            }
+        }
+
+        //------------------ 月租支付完成表單建立開始---------------------------------
     }
 }
