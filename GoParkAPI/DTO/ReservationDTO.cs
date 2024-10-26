@@ -10,6 +10,12 @@
 
         public string licensePlate { get; set; } = null!;
 
+        public DateTime StartTime { get; set; } //預約進場時間
+
+        public DateTime? ValidUntil { get; set; }  //預約進場時間+時限 //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
+
+        public bool PaymentStatus { get; set; }
+       
         public bool isCanceled { get; set; }
 
         public bool isOverdue { get; set; }
@@ -22,7 +28,6 @@
 
         public int? lotId { get; set; }  // 為了要在預定紀錄導入到預定畫面用需要lotID
 
-        public DateTime? validUntil { get; set; } //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
 
     }
 
