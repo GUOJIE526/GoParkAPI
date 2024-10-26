@@ -173,7 +173,7 @@ namespace GoParkAPI.Controllers
                     ResTime = resDTO.resTime,
                     Amount = 3000,
                     IsCanceled = false,
-                    IsOverdue = false,
+                    IsOverdue = false,  //TO 洪爸 這裡需改成不給值 (by 珊)               
                     IsFinish = false
                 };
 

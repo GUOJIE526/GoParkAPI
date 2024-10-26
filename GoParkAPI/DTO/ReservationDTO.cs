@@ -20,7 +20,7 @@
 
         public decimal? longitude { get; set; }  //經度
 
-        public int? lotId { get; set; }  // 為了要在預定紀錄導入到預定畫面用
+        public int? lotId { get; set; }  // 為了要在預定紀錄導入到預定畫面用需要lotID
 
         public DateTime? validUntil { get; set; } //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
 
