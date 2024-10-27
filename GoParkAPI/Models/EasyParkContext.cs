@@ -352,7 +352,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ValidUntil)
                 .HasColumnType("datetime")
                 .HasColumnName("valid_until");
-
+            entity.Property(e => e.TransactionId).HasMaxLength(50);
             entity.HasOne(d => d.Car).WithMany(p => p.Reservation)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

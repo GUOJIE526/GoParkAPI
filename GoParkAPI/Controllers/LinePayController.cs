@@ -18,15 +18,13 @@ namespace GoParkAPI.Controllers
         private readonly MyPayService _myPayService;
         private readonly EasyParkContext _context;
         private readonly MailService _sentmail;
-        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail , MyPayService myPayService)
+        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail, MyPayService myPayService)
         {
             _linePayService = linePayService;
             _context = context;
             _sentmail = sentmail;
             _myPayService = myPayService;
         }
-
-
 
         // ------------------------ 驗證月租方案是否相符開始 -------------------------------
 
@@ -36,7 +34,7 @@ namespace GoParkAPI.Controllers
             try
             {
                 // 驗證基本資料
-                if (dto.LotId <=0 || string.IsNullOrEmpty(dto.PlanId) || dto.Amount <= 0)
+                if (dto.LotId <= 0 || string.IsNullOrEmpty(dto.PlanId) || dto.Amount <= 0)
                 {
                     return BadRequest(new { message = "無效的停車場 ID、方案 ID 或金額。" });
                 }
@@ -121,7 +119,7 @@ namespace GoParkAPI.Controllers
         public async Task<IActionResult> ValidateDayPayment([FromBody] PaymentValidationDayDto request)
         {
             if (request == null || request.lotId <= 0 || request.Amount < 0)
-            {          
+            {
                 return BadRequest(new { message = "無效的請求資料。" });
             }
             try
@@ -145,24 +143,100 @@ namespace GoParkAPI.Controllers
         // ------------------------ 驗證預約停車的金額是否相符結束 -------------------------------
 
 
+        //------------------------- 從前台接收lotId資訊，然後從後台返回資料-------------------------
+
+        [HttpPost("ListenLotId")]
+        public async Task<IActionResult> ListenLotId([FromBody] ListenLotDTO dto)
+        {
+            try
+            {
+                
+                var lotId = dto.LotId;
+                if (lotId == null)
+                {
+                    return NotFound(new { message = "LotId 不存在於 Session" });
+                }
+
+                // 2. 根據 LotId 查詢停車場資訊
+                var park = await _context.ParkingLots.FirstOrDefaultAsync(p => p.LotId == lotId);
+                if (park == null)
+                {
+                    return NotFound(new { message = "找不到對應的停車場" });
+                }
+
+                // 3. 回傳停車場資訊
+                return Ok(new
+                {
+                    message = "成功取得停車場資訊",
+                    lotName = park.LotName,
+                    lotType = park.Type,
+                    lotLocation = park.Location,
+                    lotValid = park.ValidSpace,
+                    lotWeek = park.WeekdayRate,
+                    lotTel = park.Tel,
+                    lotLatitude = park.Latitude,
+                    lotLongitude = park.Longitude
+                });
+            }
+            catch (Exception ex)
+            {
+                // 4. 捕捉例外狀況並回傳 500 錯誤
+                return StatusCode(500, new { message = $"伺服器錯誤: {ex.Message}" });
+            }
+
+        }
 
 
+        //------------------------------ 預約支付請求開始 ------------------------------------
 
+        [HttpPost("CreateDay")]
+        public async Task<IActionResult> CreateDay([FromBody] PaymentRequestDto dto)
+        {
+            try
+            {
+                // 使用 LinePay 服務發送支付請求
+                var paymentResponse = await _linePayService.SendPaymentRequest(dto);
 
+                Reservation rentalRecord = _myPayService.ResMapDtoToModel(dto);
 
+                // 將租賃記錄新增到資料庫
+                await _context.Reservation.AddAsync(rentalRecord);
 
+                // 保存變更
+                await _context.SaveChangesAsync();
 
+                // 回傳支付結果
+                return Ok(paymentResponse);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"發生錯誤：{ex.Message}");
 
+                // 回傳錯誤回應
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "處理支付時發生錯誤。" });
+            }
 
+        }
 
+        // ------------------------ 預約支付請求結束 -------------------------------
 
+        //------------------------- 預約完成表單建立開始 -------------------------------
 
+        [HttpPost("UpdateResPayment")]
+        public async Task<IActionResult> UpdateResPayment([FromBody] UpdatePaymentStatusDTO dto)
+        {
+            var (success, message) = await _myPayService.UpdateResPayment(dto.OrderId);
 
+            if (!success)
+            {
+                return NotFound(new { success = false, message });
+            }
 
+            return Ok(new { success = true, message });
+        }
 
-
-
-
+        //------------------------- 預約完成表單建立結束 -------------------------------
 
 
         //-------------------------------------------------------------------------------------------
@@ -181,5 +255,11 @@ namespace GoParkAPI.Controllers
         {
             _linePayService.TransactionCancel(transactionId);
         }
+
+
+
+
+
+        // ------------------------ 發送月租付款申請開始 -------------------------------
     }
 }

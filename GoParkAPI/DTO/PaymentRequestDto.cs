@@ -9,8 +9,9 @@
     public string PlanId { get; set; }
     public int CarId {  get; set; }
     public int LotId { get; set; }
-
+    public DateTime? StartTime { get; set; }
 }
+
 public class PackageDto
 {
     public string Id { get; set; }

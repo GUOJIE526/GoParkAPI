@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Numerics;
 using System.Text;
+using static Microsoft.AspNetCore.Razor.Language.TagHelperMetadata;
 
 namespace GoParkAPI.Services
 {
@@ -44,9 +45,6 @@ namespace GoParkAPI.Services
 
         }
         //--------------------- 月租方案結束 ------------------------
-
-
-
 
         //------------------ 檢測月租方案是否相符開始 ---------------------
         public async Task<bool> ValidatePayment(int LotId ,string planId, int paidAmount)
@@ -86,30 +84,6 @@ namespace GoParkAPI.Services
         }
         //------------------ 檢測月租方案是否相符結束 ---------------------
 
-
-        //------------------ 檢測預定金額和每個小時的時間是否相符開始 ---------------------------
-
-        public async Task<bool> ValidateDayMoney(int lotId,int weekDay)
-        {
-            var park = await _context.ParkingLots
-                .FirstOrDefaultAsync(r => r.LotId == lotId);
-            if(park ==null)
-            {
-                throw new Exception("此停車場並不存在");
-          
-            }
-            if(park.WeekdayRate != weekDay)
-            {
-                Console.WriteLine($"{park.LotName}的每小時金額比對錯誤");
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-            
-        }
-        //------------------ 檢測預定金額和每個小時的時間是否相符結束 ---------------------------
 
         //------------------ 月租支付完成表單建立開始---------------------------------
         public async Task<(bool success, string message)> UpdatePaymentStatusAsync(string orderId)
@@ -165,5 +139,102 @@ namespace GoParkAPI.Services
         }
 
         //------------------ 月租支付完成表單建立開始---------------------------------
+
+
+        //------------------ 檢測預定金額和每個小時的時間是否相符開始 ---------------------------
+
+        public async Task<bool> ValidateDayMoney(int lotId, int weekDay)
+        {
+            var park = await _context.ParkingLots
+                .FirstOrDefaultAsync(r => r.LotId == lotId);
+            if (park == null)
+            {
+                throw new Exception("此停車場並不存在");
+
+            }
+            if (park.WeekdayRate != weekDay)
+            {
+                Console.WriteLine($"{park.LotName}的每小時金額比對錯誤");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+
+        }
+        //------------------ 檢測預定金額和每個小時的時間是否相符結束 --------------------------- 
+
+        //------------------ 預約支付完成表單建立開始---------------------------------
+        public async Task<(bool success, string message)> UpdateResPayment(string orderId)
+        {
+            var rentalRecord = await _context.Reservation
+                .FirstOrDefaultAsync(r => r.TransactionId == orderId);
+
+            if (rentalRecord == null)
+            {
+                return (false, "找不到對應的租賃紀錄");
+            }
+
+            var parkLot = await _context.ParkingLots
+                .FirstOrDefaultAsync(p => p.LotId == rentalRecord.LotId);
+
+            if (parkLot == null)
+            {
+                return (false, "找不到對應的車位");
+            }
+
+            if (parkLot.ValidSpace <= 0)
+            {
+                return (false, "車位不足，無法更新支付狀態");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                rentalRecord.PaymentStatus = true;
+                parkLot.ValidSpace -= 1;
+
+                var dealRecord = new DealRecord
+                {
+                    CarId = rentalRecord.CarId,
+                    Amount = 3000,
+                    PaymentTime = DateTime.Now,
+                    ParkType = "margin"
+                };
+
+                await _context.DealRecord.AddAsync(dealRecord);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return (true, "支付狀態已更新");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine("更新支付狀態失敗");
+                return (false, "更新支付狀態失敗，請稍後再試");
+            }
+        }
+
+        //------------------ 預約支付完成表單建立開始---------------------------------
+
+        //--------------------- 預約表單開始 ------------------------
+
+        public Reservation ResMapDtoToModel(PaymentRequestDto dto)
+        {
+            
+            return new Reservation
+            {
+                CarId = dto.CarId,
+                LotId = dto.LotId,
+                ResTime=DateTime.Now,
+                StartTime = dto.StartTime,
+                PaymentStatus = false,
+                TransactionId = dto.OrderId
+            };
+
+        }
+        //--------------------- 預約表單結束 ------------------------
     }
 }
