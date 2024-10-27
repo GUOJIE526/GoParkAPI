@@ -104,6 +104,19 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
+            // 1. 查詢資料庫中的客戶 Email
+            var customer = await _context.Customer
+                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+
+            if (customer == null)
+            {
+                return NotFound(new { success = false, message = "找不到對應的使用者。" });
+            }
+
+            // 取得客戶的 Email
+            string customerEmail = customer.Email;
+
+            // 2. 更新支付狀態
             var (success, message) = await _myPayService.UpdatePaymentStatusAsync(dto.OrderId);
 
             if (!success)
@@ -111,7 +124,25 @@ namespace GoParkAPI.Controllers
                 return NotFound(new { success = false, message });
             }
 
-            return Ok(new { success = true, message });
+            // 3. 發送成功通知郵件
+            string subject = "MyGoParking!";
+            string emailMessage = $"<p>親愛的 {customer.Username}：</p>" +
+                                  $"<p>敬祝順利，感謝申請月租！</p>" +
+                                  $"<p>MyGoParking 團隊 敬上</p>";
+
+            try
+            {
+                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage); // 發送信件
+                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+            }
+            catch (Exception ex)
+            {
+                // 捕捉並記錄郵件發送錯誤
+                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            }
+
+            // 4. 返回成功回應
+            return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
         }
 
 
@@ -155,7 +186,7 @@ namespace GoParkAPI.Controllers
         {
             try
             {
-                
+
                 var lotId = dto.LotId;
                 if (lotId == null)
                 {
@@ -231,6 +262,19 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdateResPayment")]
         public async Task<IActionResult> UpdateResPayment([FromBody] UpdatePaymentStatusDTO dto)
         {
+            // 1. 查詢資料庫中的客戶資料
+            var customer = await _context.Customer
+                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+
+            if (customer == null)
+            {
+                return NotFound(new { success = false, message = "找不到對應的使用者。" });
+            }
+
+            // 取得客戶 Email
+            string customerEmail = customer.Email;
+
+            // 2. 更新支付狀態
             var (success, message) = await _myPayService.UpdateResPayment(dto.OrderId);
 
             if (!success)
@@ -238,8 +282,29 @@ namespace GoParkAPI.Controllers
                 return NotFound(new { success = false, message });
             }
 
-            return Ok(new { success = true, message });
+
+            // 3. 發送成功通知郵件
+            string subject = "MyGoParking!";
+            string emailMessage = $"<p>親愛的 {customer.Username}：</p>" +
+                                  $"<p>敬祝順利，感謝預約！</p>" +
+                                  $"<p>MyGoParking 團隊 敬上</p>";
+
+            try
+            {
+                // 4. 發送成功通知郵件
+                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage);
+                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+            }
+            catch (Exception ex)
+            {
+                // 錯誤處理，記錄錯誤訊息
+                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            }
+
+            // 5. 支付成功回應
+            return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
         }
+
 
         //------------------------- 預約完成表單建立結束 -------------------------------
 
