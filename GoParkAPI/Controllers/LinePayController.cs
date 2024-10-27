@@ -68,8 +68,13 @@ namespace GoParkAPI.Controllers
                 // 使用 LinePay 服務發送支付請求
                 var paymentResponse = await _linePayService.SendPaymentRequest(dto);
 
+                // 從資料庫查詢該 CarId 的所有租賃記錄
+                var existingRentals = await _context.MonthlyRental
+                    .Where(r => r.CarId == dto.CarId)
+                    .ToListAsync();
+
                 // 將 DTO 映射為 MonthlyRental 模型
-                MonthlyRental rentalRecord = _myPayService.MapDtoToModel(dto);
+                MonthlyRental rentalRecord = _myPayService.MapDtoToModel(dto, existingRentals);
 
                 // 將租賃記錄新增到資料庫
                 await _context.MonthlyRental.AddAsync(rentalRecord);
