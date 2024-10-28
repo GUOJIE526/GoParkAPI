@@ -55,7 +55,8 @@ namespace GoParkAPI.Controllers
                     district = rental.Lot.District,
                     startDate = rental.StartDate,
                     endDate = rental.EndDate,
-                    amount = rental.Amount,
+                    amount = rental.Amount,  //付的總額
+
                 });
 
             if (rentals == null)
