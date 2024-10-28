@@ -30,7 +30,7 @@ namespace GoParkAPI.Controllers
                     Status = "未回覆"
                 };
 
-                _context.Survey.Add(newsurvey);
+                _context.Surveys.Add(newsurvey);
                 await _context.SaveChangesAsync();
 
                 return new JsonResult(new { status = "success" });
