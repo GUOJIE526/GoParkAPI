@@ -3,6 +3,7 @@
     public class UpdatePaymentStatusDTO
     {
         public string OrderId { get; set; } // 從前端傳來的訂單 ID
-        public int amount {  get; set; }
+        public int? UserId {  get; set; }
+
     }
 }

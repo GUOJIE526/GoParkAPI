@@ -280,7 +280,6 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.LotId)
                 .ValueGeneratedNever()
                 .HasColumnName("lot_id");
-            entity.Property(e => e.BigCarSpace).HasColumnName("bigCarSpace");
             entity.Property(e => e.District)
                 .HasMaxLength(50)
                 .HasColumnName("district");
@@ -370,8 +369,8 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ValidUntil)
                 .HasColumnType("datetime")
                 .HasColumnName("valid_until");
-
-            entity.HasOne(d => d.Car).WithMany(p => p.Reservations)
+            entity.Property(e => e.TransactionId).HasMaxLength(50);
+            entity.HasOne(d => d.Car).WithMany(p => p.Reservation)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Reservation_Car");
@@ -414,7 +413,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ReplyMessage).HasColumnName("reply_message");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
-                .HasDefaultValue("未回覆")
+                .HasDefaultValue("???")
                 .HasColumnName("status");
             entity.Property(e => e.SubmittedAt)
                 .HasColumnType("datetime")

@@ -15,7 +15,7 @@ public partial class EntryExitManagement
 
     public string? LicensePlatePhoto { get; set; }
 
-    public DateTime EntryTime { get; set; }
+    public DateTime? EntryTime { get; set; }
 
     public DateTime? LicensePlateKeyinTime { get; set; }
 

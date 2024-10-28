@@ -15,7 +15,7 @@ public partial class Reservation
 
     public DateTime? ValidUntil { get; set; }
 
-    public DateTime StartTime { get; set; }
+    public DateTime? StartTime { get; set; }
 
     public bool PaymentStatus { get; set; }
 
@@ -28,6 +28,7 @@ public partial class Reservation
     public bool NotificationStatus { get; set; }
 
     public bool IsFinish { get; set; }
+    public string? TransactionId { get; set; }
 
     public virtual Car Car { get; set; } = null!;
 
