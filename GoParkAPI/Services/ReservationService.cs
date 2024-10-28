@@ -34,7 +34,7 @@ namespace GoParkAPI.Services
             
 
             //計算Valid_until
-            DateTime startTime = (DateTime)resDTO.StartTime;
+            DateTime startTime = resDTO.startTime;
             TimeSpan overdueTime = TimeSpan.FromHours(parkingLots.ResOverdueValidTimeSet);
             DateTime validUntil = startTime.Add(overdueTime);
 

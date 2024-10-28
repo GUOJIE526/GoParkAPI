@@ -6,8 +6,6 @@
 
         public DateTime? resTime { get; set; }
 
-        public DateTime? StartTime { get; set; }
-
         public string lotName { get; set; } = null!;
 
         public string licensePlate { get; set; } = null!;
