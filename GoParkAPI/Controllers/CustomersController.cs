@@ -93,6 +93,7 @@ namespace GoParkAPI.Controllers
             {
                 return "修改失敗";
             }
+            cust.Username = custDTO.Username;
             cust.Password = custDTO.Password;
             cust.Email = custDTO.Email;
             cust.Phone = custDTO.Phone;
@@ -241,11 +242,18 @@ namespace GoParkAPI.Controllers
         public IActionResult Login(LoginsDTO login)
 
         {
+            //string userName = "";
+            //string email = "";
+            //string password = "";
+            //string licensePlate = "";
+            //string phone = "";
             bool exit = false;
             string message = "";
             int UserId = 0;
-            var member = _context.Customer.Where(m => m.Email.Equals(login.Email)).SingleOrDefault();
 
+            
+            var member = _context.Customer.Where(m => m.Email.Equals(login.Email)).SingleOrDefault();
+            
             if (member != null)
             {
                
@@ -261,6 +269,11 @@ namespace GoParkAPI.Controllers
                 }
                 else
                 {
+                    //userName = member.Username;
+                    //email = member.Email;
+                    //phone = member.Phone;
+                    //licensePlate = ;
+                    //password = member.Password;
                     exit = true;
                     message = "登入成功";
                     UserId = member.UserId;
@@ -273,6 +286,11 @@ namespace GoParkAPI.Controllers
             }
             exitDTO exitDTO = new exitDTO
             {
+                //Username = userName,
+                //Email = email,
+                //Phone = phone,
+                //LicensePlate = licensePlate,
+                //Password = password,
                 exit = exit,
                 UserId = UserId,
                 message = message,

@@ -49,7 +49,7 @@ namespace GoParkAPI.Controllers
                     entryexitId = record.EntryexitId,
                     lotName = record.Lot.LotName,
                     licensePlate = record.Car.LicensePlate,
-                    entryTime = record.EntryTime,
+                    //entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
                     //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
@@ -76,7 +76,7 @@ namespace GoParkAPI.Controllers
                     entryexitId = record.EntryexitId,
                     lotName = record.Lot.LotName,
                     licensePlate = record.Car.LicensePlate,
-                    entryTime = record.EntryTime,
+                    //entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
                     //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
@@ -106,7 +106,7 @@ namespace GoParkAPI.Controllers
                     latitude = record.Lot.Latitude,
                     longitude = record.Lot.Longitude,
                     licensePlate = record.Car.LicensePlate,
-                    entryTime = record.EntryTime,
+                    //entryTime = record.EntryTime,
                     exitTime = record.ExitTime,
                     //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
