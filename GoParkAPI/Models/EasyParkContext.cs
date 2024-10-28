@@ -458,7 +458,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ValidUntil)
                 .HasColumnType("datetime")
                 .HasColumnName("valid_until");
-
+            entity.Property(e => e.TransactionId).HasMaxLength(50);
             entity.HasOne(d => d.Car).WithMany(p => p.Reservation)
                 .HasForeignKey(d => d.CarId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -552,7 +552,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ReplyMessage).HasColumnName("reply_message");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
-                .HasDefaultValue("未回覆")
+                .HasDefaultValue("???")
                 .HasColumnName("status");
             entity.Property(e => e.SubmittedAt)
                 .HasColumnType("datetime")

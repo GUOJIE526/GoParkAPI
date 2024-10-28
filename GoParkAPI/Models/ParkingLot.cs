@@ -15,7 +15,7 @@ public partial class ParkingLot
 
     public string? Location { get; set; }
 
-    public int BigCarSpace { get; set; }
+    public int MonRentalSpace { get; set; }
 
     public int SmallCarSpace { get; set; }
 
@@ -46,6 +46,8 @@ public partial class ParkingLot
     public int ValidSpace { get; set; }
 
     public int ResOverdueValidTimeSet { get; set; }
+
+    public virtual ICollection<EntryExitManagement> EntryExitManagement { get; set; } = new List<EntryExitManagement>();
 
     public virtual ICollection<EntryExitManagement> EntryExitManagements { get; set; } = new List<EntryExitManagement>();
 
