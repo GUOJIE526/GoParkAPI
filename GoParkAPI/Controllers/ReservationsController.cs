@@ -201,11 +201,12 @@ namespace GoParkAPI.Controllers
         public async Task<ActionResult<List<Car>>> GetUserCarPlate(int userId)
         {
             var userCarPlate = await _context.Car.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
-            if (userCarPlate.Count == 0)
+            var carId = await _context.Car.Where(c => c.UserId == userId).Select(c => c.CarId).ToListAsync();
+            if (userCarPlate.Count == 0 && carId == null)
             {
                 return NotFound(new { Message = "無任何車輛" });
             }
-            return Ok(userCarPlate);
+            return Ok(new { carId, userCarPlate});
         }
 
         // POST: api/ResService

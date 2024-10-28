@@ -43,6 +43,7 @@ namespace GoParkAPI.Services
             {
                 CarId = _context.Car.FirstOrDefault(c => c.LicensePlate == resDTO.licensePlate).CarId,
                 LotId = parkingLots.LotId,
+                ResTime = DateTime.Now,
                 StartTime = startTime,
                 ValidUntil = validUntil, //保存計算結果
             };
