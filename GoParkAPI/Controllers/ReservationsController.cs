@@ -232,6 +232,7 @@ namespace GoParkAPI.Controllers
                     {
                         newReservation.CarId,
                         newReservation.LotId,
+                        newReservation.ResTime,
                         newReservation.StartTime,
                         newReservation.ValidUntil,
                     }

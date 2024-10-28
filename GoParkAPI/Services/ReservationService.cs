@@ -31,7 +31,6 @@ namespace GoParkAPI.Services
             {
                 throw new Exception("車位已滿");
             }
-            
 
             //計算Valid_until
             DateTime startTime = resDTO.startTime;
