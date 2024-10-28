@@ -26,7 +26,7 @@ namespace GoParkAPI.Controllers
         [HttpGet]
         public async Task<IEnumerable<CarsDTO>> GetCars(int userId)
         {
-            var cars =  _context.Cars
+            var cars =  _context.Car
                 .Where(car => car.UserId == userId)
                 .Select(car => new CarsDTO
                 {
@@ -51,7 +51,7 @@ namespace GoParkAPI.Controllers
             foreach (var car in carsDto)
             {
                 // 找到對應的車輛
-                var updateCar = await _context.Cars.FindAsync(car.carId);
+                var updateCar = await _context.Car.FindAsync(car.carId);
                 if (updateCar == null)
                 {
                     return "修改失敗";
@@ -87,7 +87,7 @@ namespace GoParkAPI.Controllers
                     IsActive = car.isActive
 
                 };
-                _context.Cars.Add(newCar);
+                _context.Car.Add(newCar);
             };
             
 
@@ -122,7 +122,7 @@ namespace GoParkAPI.Controllers
 
         private bool CarExists(int id)
         {
-            return _context.Cars.Any(e => e.CarId == id);
+            return _context.Car.Any(e => e.CarId == id);
         }
     }
 }

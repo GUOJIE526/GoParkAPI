@@ -49,7 +49,7 @@ builder.Services.AddScoped<MyPayService>();
 //----------------------------------------
 
 
-builder.Services.AddScoped<Hash>();
+builder.Services.AddScoped<pwdHash>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<MonRentalService>();
 

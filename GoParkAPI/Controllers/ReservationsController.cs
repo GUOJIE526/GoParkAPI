@@ -20,7 +20,7 @@ namespace GoParkAPI.Controllers
         //先抓出該用戶註冊的車牌
         private async Task<List<string>> GetUserCars(int userId)
         {
-            return await _context.Cars
+            return await _context.Car
                 .Where(car => car.UserId == userId)
                 .Select(car => car.LicensePlate)
                 .ToListAsync();
@@ -35,7 +35,7 @@ namespace GoParkAPI.Controllers
             var userCars = await GetUserCars(userId);
 
             //篩選該用戶車牌的預訂資料
-            var reservations = _context.Reservations
+            var reservations = _context.Reservation
                 .Where(res => userCars.Contains(res.Car.LicensePlate)) // 比對車牌號碼
                 .Where(res => string.IsNullOrEmpty(licensePlate) || res.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
                 .Select(res => new ReservationDTO
@@ -44,7 +44,7 @@ namespace GoParkAPI.Controllers
                     resTime = (DateTime)res.ResTime,
                     lotName = res.Lot.LotName,
                     licensePlate = res.Car.LicensePlate,
-                    startTime = res.StartTime,
+                    startTime = (DateTime)res.StartTime,
                     validUntil = res.ValidUntil,  //還在進行中的預定要顯示
                     PaymentStatus =res.PaymentStatus,
                     isCanceled = res.IsCanceled,
@@ -71,7 +71,7 @@ namespace GoParkAPI.Controllers
            
 
             // 根據停車場名稱模糊查詢訂單
-            var reservations = _context.Reservations
+            var reservations = _context.Reservation
                 .Where(res => userCars.Contains(res.Car.LicensePlate) && res.Lot.LotName.Contains(lotName))
                 .Select(res => new ReservationDTO
                 {
@@ -106,15 +106,15 @@ namespace GoParkAPI.Controllers
             {
                 case "isCompleted":
                     // 返回已使用的優惠券
-                    res = _context.Reservations
+                    res = _context.Reservation
                         .Where(res => userCars.Contains(res.Car.LicensePlate) && res.IsFinish && !res.IsOverdue  && !res.IsCanceled);
                     break;
                 case "isCanceled":
-                    res = _context.Reservations
+                    res = _context.Reservation
                         .Where(res => userCars.Contains(res.Car.LicensePlate) && res.IsCanceled == true);
                     break;
                 case "isOverDue":
-                    res= _context.Reservations
+                    res= _context.Reservation
                         .Where(res => userCars.Contains(res.Car.LicensePlate) && res.IsOverdue);
                     break;
             };
@@ -127,7 +127,7 @@ namespace GoParkAPI.Controllers
                 resTime = (DateTime)res.ResTime,
                 lotName = res.Lot.LotName,
                 licensePlate = res.Car.LicensePlate,
-                startTime = res.StartTime,
+                startTime = (DateTime)res.StartTime,
                 validUntil = res.ValidUntil,  //還在進行中的預定要顯示
                 PaymentStatus = res.PaymentStatus,
                 isCanceled = res.IsCanceled,
@@ -145,7 +145,7 @@ namespace GoParkAPI.Controllers
         [HttpPut("{id}")]
         public async Task<string> PutReservation(int id)
         {
-            var updateRes = await _context.Reservations.FindAsync(id);
+            var updateRes = await _context.Reservation.FindAsync(id);
             if (updateRes == null){
                 return "取消預訂失敗，查無此預訂資料";
             }
@@ -200,7 +200,7 @@ namespace GoParkAPI.Controllers
         [HttpGet("GetUserCarPlate")]
         public async Task<ActionResult<List<Car>>> GetUserCarPlate(int userId)
         {
-            var userCarPlate = await _context.Cars.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
+            var userCarPlate = await _context.Car.Where(c => c.UserId == userId).Select(c => c.LicensePlate).ToListAsync();
             if (userCarPlate.Count == 0)
             {
                 return NotFound(new { Message = "無任何車輛" });
@@ -267,7 +267,7 @@ namespace GoParkAPI.Controllers
 
         private bool ReservationExists(int id)
         {
-            return _context.Reservations.Any(e => e.ResId == id);
+            return _context.Reservation.Any(e => e.ResId == id);
         }
     }
 

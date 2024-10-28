@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GoParkAPI
 {
-    public class Hash
+    public class pwdHash
     {
         private const int SaltSize = 16; // 128 bit
         private const int KeySize = 32; // 256 bit

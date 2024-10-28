@@ -77,7 +77,7 @@ namespace GoParkAPI.Controllers
                 MonthlyRental rentalRecord = _myPayService.MapDtoToModel(dto, existingRentals);
 
                 // 將租賃記錄新增到資料庫
-                await _context.MonthlyRentals.AddAsync(rentalRecord);
+                await _context.MonthlyRental.AddAsync(rentalRecord);
 
                 // 保存變更
                 await _context.SaveChangesAsync();
@@ -104,9 +104,9 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 根據傳入的 OrderId 比對資料庫中的 TransactionId
-            var rentalRecord = await _context.MonthlyRentals
-                .FirstOrDefaultAsync(r => r.TransactionId == dto.OrderId);
+            // 1. 查詢資料庫中的客戶 Email
+            var customer = await _context.Customer
+                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
 
             if (customer == null)
             {
@@ -130,8 +130,16 @@ namespace GoParkAPI.Controllers
                                   $"<p>敬祝順利，感謝申請月租！</p>" +
                                   $"<p>MyGoParking 團隊 敬上</p>";
 
-            // 將交易記錄添加到資料庫
-            await _context.DealRecords.AddAsync(dealRecord);
+            try
+            {
+                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage); // 發送信件
+                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+            }
+            catch (Exception ex)
+            {
+                // 捕捉並記錄郵件發送錯誤
+                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            }
 
             // 4. 返回成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });

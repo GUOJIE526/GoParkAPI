@@ -26,7 +26,7 @@ namespace GoParkAPI.Controllers
         //先抓出該用戶註冊的車牌id
         private async Task<List<int>> GetUserCars(int userId)
         {
-            return await _context.Cars
+            return await _context.Car
                 .Where(car => car.UserId == userId)
                 .Select(car => car.CarId)
                 .ToListAsync();
@@ -40,7 +40,7 @@ namespace GoParkAPI.Controllers
             var userCars = await GetUserCars(userId);
 
             //篩選該用戶車牌的預訂資料
-            var rentals = _context.MonthlyRentals
+            var rentals = _context.MonthlyRental
                 .Where(rental => userCars.Contains(rental.CarId)) // 比對車牌號碼
                 .Where(rental => string.IsNullOrEmpty(licensePlate) || rental.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
                 .Select(rental => new MonthlyRentalDTO
@@ -53,8 +53,8 @@ namespace GoParkAPI.Controllers
                     longitude = rental.Lot.Longitude,
                     location = rental.Lot.Location,
                     district = rental.Lot.District,
-                    startDate = rental.StartDate,
-                    endDate = rental.EndDate,
+                    startDate = (DateTime)rental.StartDate,
+                    endDate = (DateTime)rental.EndDate,
                     amount = rental.Amount,  //付的總額
 
                 });
@@ -118,7 +118,7 @@ namespace GoParkAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<MonthlyRental>> PostMonthlyRental(MonthlyRental monthlyRental)
         {
-            _context.MonthlyRentals.Add(monthlyRental);
+            _context.MonthlyRental.Add(monthlyRental);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetMonthlyRental", new { id = monthlyRental.RenId }, monthlyRental);
@@ -128,13 +128,13 @@ namespace GoParkAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMonthlyRental(int id)
         {
-            var monthlyRental = await _context.MonthlyRentals.FindAsync(id);
+            var monthlyRental = await _context.MonthlyRental.FindAsync(id);
             if (monthlyRental == null)
             {
                 return NotFound();
             }
 
-            _context.MonthlyRentals.Remove(monthlyRental);
+            _context.MonthlyRental.Remove(monthlyRental);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -142,7 +142,7 @@ namespace GoParkAPI.Controllers
 
         private bool MonthlyRentalExists(int id)
         {
-            return _context.MonthlyRentals.Any(e => e.RenId == id);
+            return _context.MonthlyRental.Any(e => e.RenId == id);
         }
     }
 }

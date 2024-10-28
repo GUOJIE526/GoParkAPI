@@ -23,11 +23,11 @@ namespace GoParkAPI.Controllers
     public class CustomersController : ControllerBase
     {
         private readonly EasyParkContext _context;
-        private readonly Hash _hash;
+        private readonly pwdHash _hash;
         private readonly MailService _sentmail;
 
 
-        public CustomersController(EasyParkContext context, Hash hash, MailService sentmail)
+        public CustomersController(EasyParkContext context, pwdHash hash, MailService sentmail)
         {
             _context = context;
             _hash = hash;
@@ -38,7 +38,7 @@ namespace GoParkAPI.Controllers
         [HttpGet]
         public async Task<IEnumerable<CustomerDTO>> GetCustomer()
         {
-            return _context.Customers.Select(cust => new CustomerDTO
+            return _context.Customer.Select(cust => new CustomerDTO
             {
                 UserId = cust.UserId,
                 Username = cust.Username,
@@ -46,7 +46,7 @@ namespace GoParkAPI.Controllers
                 Salt = cust.Salt,
                 Email = cust.Email,
                 Phone = cust.Phone,
-                LicensePlate = _context.Cars.Where(car => car.UserId == cust.UserId).Select(car => car.LicensePlate).FirstOrDefault()
+                LicensePlate = _context.Car.Where(car => car.UserId == cust.UserId).Select(car => car.LicensePlate).FirstOrDefault()
             });
         }
 
@@ -54,9 +54,9 @@ namespace GoParkAPI.Controllers
         [HttpGet("info{id}")]
         public async Task<CustomerDTO> GetCustomer(int id)
         {
-            var l = await _context.Cars.Where(car => car.UserId == id).FirstAsync();
+            var l = await _context.Car.Where(car => car.UserId == id).FirstAsync();
             string cnum = l.LicensePlate;
-            var customer = await _context.Customers.FindAsync(id);
+            var customer = await _context.Customer.FindAsync(id);
             CustomerDTO custDTO = new CustomerDTO
             {
                 UserId = customer.UserId,
@@ -86,8 +86,8 @@ namespace GoParkAPI.Controllers
             {
                 return "無法修改";
             }
-            Customer cust = await _context.Customers.FindAsync(id);
-            Car l = await _context.Cars.FindAsync(id);
+            Customer cust = await _context.Customer.FindAsync(id);
+            Car l = await _context.Car.FindAsync(id);
 
             if (cust == null)
             {
@@ -123,7 +123,7 @@ namespace GoParkAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
         {
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
+            var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
             if (customer == null)
             {
                 //密碼加密加鹽
@@ -141,7 +141,7 @@ namespace GoParkAPI.Controllers
                     Email = custDTO.Email,
                     Phone = custDTO.Phone,
                 };
-                _context.Customers.Add(cust);//加進資料庫 
+                _context.Customer.Add(cust);//加進資料庫 
                 await _context.SaveChangesAsync();//存檔
                 Car car = new Car
                 {
@@ -150,7 +150,7 @@ namespace GoParkAPI.Controllers
                     UserId = cust.UserId,//對應已經覆蓋的id
                     IsActive = true,//填預設值
                 };
-                _context.Cars.Add(car);//加進資料庫
+                _context.Car.Add(car);//加進資料庫
                 await _context.SaveChangesAsync();//存檔
 
                 // 檢查 Email 是否存在並發送確認郵件
@@ -169,7 +169,7 @@ namespace GoParkAPI.Controllers
                         Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
                     }
                 }
-                var id = await _context.Customers.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
+                var id = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
                 //return CreatedAtAction("GetCustomer", new {  id });
                 return Ok( new { message = id.UserId });
             }
@@ -185,7 +185,7 @@ namespace GoParkAPI.Controllers
         public async Task<ActionResult<CustomerDTO>> ResetPassword(string email, string newPassword)
         {
             // 檢查 Email 是否存在於系統中
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == email);
+            var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == email);
             if (customer == null)
             {
                 return NotFound("該 Email 不存在");
@@ -212,7 +212,7 @@ namespace GoParkAPI.Controllers
             //customer.TokenExpiration = DateTime.UtcNow.AddHours(1);
 
             // 儲存 token 到數據庫
-            _context.Customers.Update(customer);
+            _context.Customer.Update(customer);
             await _context.SaveChangesAsync();
 
             // 生成重置密碼的鏈接
@@ -250,7 +250,7 @@ namespace GoParkAPI.Controllers
             bool exit = false;
             string message = "";
             int UserId = 0;
-            var member = _context.Customers.Where(m => m.Email.Equals(login.Email)).SingleOrDefault();
+            var member = _context.Customer.Where(m => m.Email.Equals(login.Email)).SingleOrDefault();
             
             if (member != null)
             {
@@ -315,7 +315,7 @@ namespace GoParkAPI.Controllers
 
         private bool CustomerExists(int id)
         {
-            return _context.Customers.Any(e => e.UserId == id);
+            return _context.Customer.Any(e => e.UserId == id);
         }
     }
 
