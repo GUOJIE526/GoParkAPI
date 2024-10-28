@@ -28,7 +28,7 @@ namespace GoParkAPI.Controllers
         {
 
             //篩選該用戶擁有的優惠券
-            var coupons = _context.Coupon
+            var coupons = _context.Coupons
                 .Where(coupon => coupon.UserId == userId)
                 .Select(res => new CouponsDTO
                 {
@@ -57,7 +57,7 @@ namespace GoParkAPI.Controllers
             {
                 case "isUsed":
                     // 返回已使用的優惠券
-                    vouchers = _context.Coupon
+                    vouchers = _context.Coupons
                         .Where(coupon => coupon.UserId == userId && coupon.IsUsed)
                         .Select(coupon => new CouponsDTO
                         {
@@ -71,7 +71,7 @@ namespace GoParkAPI.Controllers
                     break;
                 case "available":
                     // 返回未使用的優惠券
-                    vouchers = _context.Coupon
+                    vouchers = _context.Coupons
                         .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date > DateTime.Now.Date)
                         .Select(coupon => new CouponsDTO
                         {
@@ -85,7 +85,7 @@ namespace GoParkAPI.Controllers
                     break;
                 case "expired":
                     // 返回已失效的優惠券
-                    vouchers = _context.Coupon
+                    vouchers = _context.Coupons
                         .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date < DateTime.Now.Date)
                         .Select(coupon => new CouponsDTO
                         {
@@ -183,7 +183,7 @@ namespace GoParkAPI.Controllers
 
         private bool CouponExists(int id)
         {
-            return _context.Coupon.Any(e => e.CouponId == id);
+            return _context.Coupons.Any(e => e.CouponId == id);
         }
     }
 }

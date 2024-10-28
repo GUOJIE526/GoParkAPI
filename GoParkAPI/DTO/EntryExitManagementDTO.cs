@@ -12,7 +12,7 @@
         
         public DateTime? exitTime { get; set; }
 
-        //public int? totalMins { get; set; }
+        public int? totalMins { get; set; }
 
         public int? amount { get; set; }
 

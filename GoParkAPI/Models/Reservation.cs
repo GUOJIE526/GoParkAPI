@@ -28,8 +28,9 @@ public partial class Reservation
     public bool NotificationStatus { get; set; }
 
     public bool IsFinish { get; set; }
+    public string? TransactionId { get; set; }
 
     public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLots Lot { get; set; } = null!;
+    public virtual ParkingLot Lot { get; set; } = null!;
 }

@@ -3,7 +3,8 @@
     public class PaymentValidationDto
     {
         public string PlanId { get; set; }
-        public decimal Amount { get; set; }
+        public int Amount { get; set; }
+        public int LotId { get; set; }
     }
 
     public class PaymentValidationDayDto

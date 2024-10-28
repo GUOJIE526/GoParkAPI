@@ -13,5 +13,5 @@ public partial class ParkingSlot
 
     public bool IsRented { get; set; }
 
-    public virtual ParkingLots Lot { get; set; } = null!;
+    public virtual ParkingLot Lot { get; set; } = null!;
 }
