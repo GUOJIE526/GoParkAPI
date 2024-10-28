@@ -31,6 +31,8 @@ public partial class ParkingLots
 
     public int HolidayRate { get; set; }
 
+    public int ResDeposit { get; set; }
+
     public int MonRentalRate { get; set; }
 
     public string? OpendoorTime { get; set; }
@@ -42,6 +44,8 @@ public partial class ParkingLots
     public decimal? Longitude { get; set; }
 
     public int ValidSpace { get; set; }
+
+    public int ResOverdueValidTimeSet { get; set; }
 
     public virtual ICollection<EntryExitManagement> EntryExitManagement { get; set; } = new List<EntryExitManagement>();
 
