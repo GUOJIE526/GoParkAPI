@@ -11,9 +11,9 @@ public partial class MonthlyRental
 
     public int LotId { get; set; }
 
-    public DateTime StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
 
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     public int Amount { get; set; }
 
@@ -23,5 +23,5 @@ public partial class MonthlyRental
 
     public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLot Lot { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 }

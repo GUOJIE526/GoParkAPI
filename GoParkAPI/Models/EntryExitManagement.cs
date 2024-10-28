@@ -15,7 +15,7 @@ public partial class EntryExitManagement
 
     public string? LicensePlatePhoto { get; set; }
 
-    public DateTime EntryTime { get; set; }
+    public DateTime? EntryTime { get; set; }
 
     public DateTime? LicensePlateKeyinTime { get; set; }
 
@@ -33,5 +33,5 @@ public partial class EntryExitManagement
 
     public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLot Lot { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 }

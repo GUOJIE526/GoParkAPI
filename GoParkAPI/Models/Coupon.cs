@@ -19,7 +19,7 @@ public partial class Coupon
 
     public int? UserId { get; set; }
 
-    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+    public virtual ICollection<Transactions> Transactions { get; set; } = new List<Transactions>();
 
     public virtual Customer? User { get; set; }
 }

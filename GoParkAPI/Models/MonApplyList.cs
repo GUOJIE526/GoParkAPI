@@ -11,7 +11,7 @@ public partial class MonApplyList
 
     public int LotId { get; set; }
 
-    public DateTime ApplyDate { get; set; }
+    public DateTime? ApplyDate { get; set; }
 
     public string ApplyStatus { get; set; } = null!;
 
@@ -21,5 +21,5 @@ public partial class MonApplyList
 
     public virtual Car Car { get; set; } = null!;
 
-    public virtual ParkingLot Lot { get; set; } = null!;
+    public virtual ParkingLots Lot { get; set; } = null!;
 }
