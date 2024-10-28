@@ -212,7 +212,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<MonthlyRental>(entity =>
         {
-            entity.HasKey(e => e.RenId).HasName("PK__MonthlyR__5833C152FA762C76");
+            entity.HasKey(e => e.RenId).HasName("PK__MonthlyR__5833C152A450E199");
 
             entity.Property(e => e.RenId).HasColumnName("ren_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -392,7 +392,7 @@ public partial class EasyParkContext : DbContext
             entity.Property(e => e.ReplyMessage).HasColumnName("reply_message");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
-                .HasDefaultValue("未回覆")
+                .HasDefaultValue("???")
                 .HasColumnName("status");
             entity.Property(e => e.SubmittedAt)
                 .HasColumnType("datetime")
