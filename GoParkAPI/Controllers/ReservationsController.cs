@@ -206,7 +206,7 @@ namespace GoParkAPI.Controllers
             {
                 return NotFound(new { Message = "無任何車輛" });
             }
-            return Ok(new { carId, userCarPlate});
+            return Ok(new { carId, userCarPlate });
         }
 
         // POST: api/ResService
