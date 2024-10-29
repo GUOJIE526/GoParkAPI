@@ -1,4 +1,5 @@
 ﻿using GoParkAPI;
+using GoParkAPI.Controllers;
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using GoParkAPI.Services;
@@ -89,7 +90,7 @@ var app = builder.Build();
 // 啟用 Hangfire Dashboard
 app.UseHangfireDashboard();
 // 在應用啟動時設置 Recurring Job
-RecurringJob.AddOrUpdate<PushNotificationService>("CheckAndSendOverdueReminder", service => service.CheckAndSendOverdueReminder(), "*/2 * * * *"); // 每隔5分鐘執行一次
+RecurringJob.AddOrUpdate<NotificationController>("CheckAndSendOverdueReminder", service => service.CheckAndSendOverdueReminder(), "*/1 * * * *"); // 每隔5分鐘執行一次
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

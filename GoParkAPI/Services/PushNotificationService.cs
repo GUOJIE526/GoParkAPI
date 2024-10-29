@@ -52,26 +52,5 @@ namespace GoParkAPI.Services
             }
         }
 
-        public async Task CheckAndSendOverdueReminder()
-        {
-            var now = DateTime.Now;
-            var minutesLater = now.AddMinutes(30);
-
-            //檢查未發送通知的預約提醒
-            var reservation = await _context.Reservation.Where(r => !r.IsFinish && !r.NotificationStatus && r.StartTime <= minutesLater && r.StartTime > now).ToListAsync();
-
-            if(reservation.Any())
-            {
-                //發送通知和更新紀錄
-                foreach (var res in reservation)
-                {
-                    await SendNotificationAsync("預約提醒", "您的預約將在30分鐘後超時, 請在安全前提下盡快入場, 逾時車位不保留.");
-                    res.NotificationStatus = true;
-                }
-
-                //批量更新
-                await _context.SaveChangesAsync();
-            }
-        }
     }
 }
