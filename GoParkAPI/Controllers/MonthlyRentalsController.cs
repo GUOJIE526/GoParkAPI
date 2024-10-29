@@ -60,7 +60,7 @@ namespace GoParkAPI.Controllers
                     startDate = (DateTime)rental.StartDate,
                     endDate = (DateTime)rental.EndDate,
                     amount = rental.Amount,  //付的總額
-
+                    monRentalRate = rental.Lot.MonRentalRate
                 });
 
             if (rentals == null)
