@@ -124,7 +124,7 @@ namespace GoParkAPI.Services
             {
                 rentalRecord.PaymentStatus = true;
                 parkLot.MonRentalSpace -= 1;
-                parkLot.ValidSpace -= 1;
+                //parkLot.ValidSpace -= 1;
 
                 var dealRecord = new DealRecord
                 {
@@ -233,12 +233,15 @@ namespace GoParkAPI.Services
 
         public Reservation ResMapDtoToModel(PaymentRequestDto dto)
         {
-            
+            DateTime startTime = (DateTime)dto.StartTime;
+            TimeSpan overTime = TimeSpan.FromMinutes(15);
+            DateTime vaildTime = startTime.Add(overTime);
             return new Reservation
             {
                 CarId = dto.CarId,
                 LotId = dto.LotId,
                 ResTime=DateTime.Now,
+                ValidUntil = vaildTime,
                 StartTime = dto.StartTime,
                 PaymentStatus = false,
                 TransactionId = dto.OrderId
