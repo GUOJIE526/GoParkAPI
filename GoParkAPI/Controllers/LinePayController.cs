@@ -104,17 +104,17 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 1. 查詢資料庫中的客戶 Email
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+            // 1. 查詢 Customer 資料
+            var customer = await _context.MonthlyRental
+                .Where(m => m.TransactionId == dto.OrderId)
+                .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
+                .Join(_context.Customer, userId => userId, cu => cu.UserId, (userId, cu) => cu)
+                .FirstOrDefaultAsync();
 
             if (customer == null)
             {
                 return NotFound(new { success = false, message = "找不到對應的使用者。" });
             }
-
-            // 取得客戶的 Email
-            string customerEmail = customer.Email;
 
             // 2. 更新支付狀態
             var (success, message) = await _myPayService.UpdatePaymentStatusAsync(dto.OrderId);
@@ -126,14 +126,14 @@ namespace GoParkAPI.Controllers
 
             // 3. 發送成功通知郵件
             string subject = "MyGoParking!";
-            string emailMessage = $"<p>親愛的 {customer.Username}：</p>" +
-                                  $"<p>敬祝順利，感謝申請月租！</p>" +
-                                  $"<p>MyGoParking 團隊 敬上</p>";
+            string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
+                                    <p>敬祝順利，感謝申請月租！</p>
+                                    <p>MyGoParking 團隊 敬上</p>";
 
             try
             {
-                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage); // 發送信件
-                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+                await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
+                Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
             catch (Exception ex)
             {
@@ -211,7 +211,8 @@ namespace GoParkAPI.Controllers
                     lotWeek = park.WeekdayRate,
                     lotTel = park.Tel,
                     lotLatitude = park.Latitude,
-                    lotLongitude = park.Longitude
+                    lotLongitude = park.Longitude,
+                    lotResDeposit = park.ResDeposit,
                 });
             }
             catch (Exception ex)
@@ -262,17 +263,17 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdateResPayment")]
         public async Task<IActionResult> UpdateResPayment([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 1. 查詢資料庫中的客戶資料
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+            // 1. 查詢 Customer 資料
+            var customer = await _context.Reservation
+                .Where(m => m.TransactionId == dto.OrderId)
+                .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
+                .Join(_context.Customer, userId => userId, cu => cu.UserId, (userId, cu) => cu)
+                .FirstOrDefaultAsync();
 
             if (customer == null)
             {
                 return NotFound(new { success = false, message = "找不到對應的使用者。" });
             }
-
-            // 取得客戶 Email
-            string customerEmail = customer.Email;
 
             // 2. 更新支付狀態
             var (success, message) = await _myPayService.UpdateResPayment(dto.OrderId);
@@ -281,23 +282,20 @@ namespace GoParkAPI.Controllers
             {
                 return NotFound(new { success = false, message });
             }
-
-
-            // 3. 發送成功通知郵件
+            // 3.發送成功通知郵件
             string subject = "MyGoParking!";
-            string emailMessage = $"<p>親愛的 {customer.Username}：</p>" +
-                                  $"<p>敬祝順利，感謝預約！</p>" +
-                                  $"<p>MyGoParking 團隊 敬上</p>";
+            string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
+                                    <p>敬祝順利，感謝預約！</p>
+                                    <p>MyGoParking 團隊 敬上</p>";
 
             try
             {
-                // 4. 發送成功通知郵件
-                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage);
-                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+                await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
+                Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
             catch (Exception ex)
             {
-                // 錯誤處理，記錄錯誤訊息
+                // 捕捉並記錄郵件發送錯誤
                 Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
             }
 
@@ -327,9 +325,109 @@ namespace GoParkAPI.Controllers
         }
 
 
-
-
-
         // ------------------------ 發送月租付款申請開始 -------------------------------
+
+        //------------------------- 從前台接收UserId資訊，然後從後台返回資料-------------------------
+
+        [HttpPost("ListenUserId")]
+        public async Task<IActionResult> ListenUserId([FromBody] ListenUserDTO dto)
+        {
+            try
+            {
+                if (dto == null || dto.UserId <= 0)
+                {
+                    return BadRequest(new { message = "無效的 UserId。" });
+                }
+
+                // 獲取當前時間
+                var currentTime = DateTime.Now;
+
+                // 查詢車輛資料並關聯 EntryExitManagement 資料表
+                var userCars = await _context.Customer
+                    .Where(u => u.UserId == dto.UserId)
+                    .Join(_context.Car,
+                          u => u.UserId,
+                          c => c.UserId,
+                          (u, c) => new { u.UserId, Car = c })
+                    .Join(_context.EntryExitManagement,
+                          car => car.Car.CarId,
+                          entry => entry.CarId,
+                          (car, entry) => new
+                          {
+                              car.UserId,
+                              car.Car.CarId,
+                              car.Car.LicensePlate,
+                              entry.Parktype,
+                              entry.EntryTime
+                          })
+                    .Where(e => e.Parktype == "reservation") // 過濾出 ParkType 為 reservation 的紀錄
+                    .ToListAsync();
+
+                if (!userCars.Any())
+                {
+                    return NotFound(new { message = "找不到對應的用戶或車輛資料。" });
+                }
+
+                var carList = userCars.Select(car => new
+                {
+                    carId = car.CarId,
+                    licensePlate = car.LicensePlate,
+                    entryTime = car.EntryTime,
+                    // 使用 Math.Ceiling 強制進位
+                    hoursParked = car.EntryTime.HasValue
+                    ? Math.Ceiling((currentTime - car.EntryTime.Value).TotalHours)
+                    : (double?)null
+                }).ToList();
+
+                // 查詢可用的優惠券資料
+                var userCoupons = await _context.Customer
+                    .Where(u => u.UserId == dto.UserId)
+                    .Join(_context.Coupon,
+                          u => u.UserId,
+                          coup => coup.UserId,
+                          (u, coup) => new
+                          {
+                              UserId = u.UserId,
+                              CouponId = coup.CouponId,
+                              Amount = coup.DiscountAmount,
+                              IsUsed = coup.IsUsed,
+                              ValidFrom = coup.ValidFrom,
+                              ValidUntil = coup.ValidUntil
+                          })
+                    .Where(c => !c.IsUsed &&
+                                currentTime >= c.ValidFrom &&
+                                currentTime <= c.ValidUntil)
+                    .ToListAsync();
+
+                var couponList = userCoupons.Select(coupon => new
+                {
+                    couponId = coupon.CouponId,
+                    amount = coupon.Amount
+                }).ToList();
+
+                // 檢查是否有可用的優惠券
+                if (!couponList.Any())
+                {
+                    return NotFound(new { message = "沒有可用的優惠券。" });
+                }
+
+                // 回傳車輛和優惠券資料
+                return Ok(new
+                {
+                    userId = userCars.First().UserId,
+                    cars = carList, 
+                    coupons = couponList
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"伺服器錯誤: {ex.Message}" });
+            }
+        }
+
+
+
+
+        //------------------------------ 預約支付請求開始 ------------------------------------
     }
 }
