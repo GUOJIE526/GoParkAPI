@@ -22,5 +22,7 @@
         public DateTime endDate { get; set; }
 
         public int amount { get; set; }
+
+        public int monRentalRate { get; set; }
     }
 }
