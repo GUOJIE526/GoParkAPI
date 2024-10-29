@@ -120,11 +120,13 @@ namespace GoParkAPI.Controllers
 
         // POST: api/Customers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        [HttpPost("sign")]
         public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
         {
+            
             var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
-            if (customer == null)
+            var existingCar = await _context.Car.FirstOrDefaultAsync(c => c.LicensePlate == custDTO.LicensePlate);
+            if (customer == null && existingCar == null)
             {
                 //密碼加密加鹽
                 var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
@@ -143,21 +145,25 @@ namespace GoParkAPI.Controllers
                 };
                 _context.Customer.Add(cust);//加進資料庫 
                 await _context.SaveChangesAsync();//存檔
-                Car car = new Car
-                {
-                    CarId = 0,//填預設值 系統會覆蓋
-                    LicensePlate = custDTO.LicensePlate,//填入的車牌
-                    UserId = cust.UserId,//對應已經覆蓋的id
-                    IsActive = true,//填預設值
-                };
-                _context.Car.Add(car);//加進資料庫
-                await _context.SaveChangesAsync();//存檔
 
+                
+               
+                    Car car = new Car
+                    {
+                        CarId = 0,//填預設值 系統會覆蓋
+                        LicensePlate = custDTO.LicensePlate,//填入的車牌
+                        UserId = cust.UserId,//對應已經覆蓋的id
+                        IsActive = true,//填預設值
+                    };
+
+                    _context.Car.Add(car);//加進資料庫
+                    await _context.SaveChangesAsync();//存檔
+               
                 // 檢查 Email 是否存在並發送確認郵件
                 if (!string.IsNullOrEmpty(custDTO.Email))
                 {
                     string subject = "歡迎加入 MyGoParking!";
-                    string message = $"<p>親愛的用戶： 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
+                    string message = $"<p>親愛的用戶： 感謝您註冊，您已註冊成功!  <br> 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
 
                     try
                     {
@@ -170,14 +176,21 @@ namespace GoParkAPI.Controllers
                     }
                 }
                 var id = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
-                //return CreatedAtAction("GetCustomer", new {  id });
-                return Ok( new { message = id.UserId });
+                return Ok(new { exit = true, userId = id.UserId, message = "註冊成功!" });
+                                                                                   
             }
-            else
+            else if(customer != null)
             {
                 return Ok(new { message="此帳號已註冊!"});
             }
-            
+            else if(existingCar != null)
+            {
+                return Ok(new { message = "此車牌已存在!" });
+            }
+            else
+            {
+                return Ok(new { message = "請洽客服人員" });
+            }
         }
 
 
