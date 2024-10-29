@@ -104,17 +104,17 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 1. 查詢資料庫中的客戶 Email
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+            // 1. 查詢 Customer 資料
+            var customer = await _context.MonthlyRental
+                .Where(m => m.TransactionId == dto.OrderId)
+                .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
+                .Join(_context.Customer, userId => userId, cu => cu.UserId, (userId, cu) => cu)
+                .FirstOrDefaultAsync();
 
             if (customer == null)
             {
                 return NotFound(new { success = false, message = "找不到對應的使用者。" });
             }
-
-            // 取得客戶的 Email
-            string customerEmail = customer.Email;
 
             // 2. 更新支付狀態
             var (success, message) = await _myPayService.UpdatePaymentStatusAsync(dto.OrderId);
@@ -126,14 +126,14 @@ namespace GoParkAPI.Controllers
 
             // 3. 發送成功通知郵件
             string subject = "MyGoParking!";
-            string emailMessage = $"<p>親愛的 {customer.Username}：</p>" +
-                                  $"<p>敬祝順利，感謝申請月租！</p>" +
-                                  $"<p>MyGoParking 團隊 敬上</p>";
+            string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
+                                    <p>敬祝順利，感謝申請月租！</p>
+                                    <p>MyGoParking 團隊 敬上</p>";
 
             try
             {
-                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage); // 發送信件
-                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+                await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
+                Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
             catch (Exception ex)
             {
@@ -262,17 +262,17 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdateResPayment")]
         public async Task<IActionResult> UpdateResPayment([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 1. 查詢資料庫中的客戶資料
-            var customer = await _context.Customer
-                .FirstOrDefaultAsync(c => c.UserId == dto.UserId);
+            // 1. 查詢 Customer 資料
+            var customer = await _context.Reservation
+                .Where(m => m.TransactionId == dto.OrderId)
+                .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
+                .Join(_context.Customer, userId => userId, cu => cu.UserId, (userId, cu) => cu)
+                .FirstOrDefaultAsync();
 
             if (customer == null)
             {
                 return NotFound(new { success = false, message = "找不到對應的使用者。" });
             }
-
-            // 取得客戶 Email
-            string customerEmail = customer.Email;
 
             // 2. 更新支付狀態
             var (success, message) = await _myPayService.UpdateResPayment(dto.OrderId);
@@ -281,23 +281,20 @@ namespace GoParkAPI.Controllers
             {
                 return NotFound(new { success = false, message });
             }
-
-
-            // 3. 發送成功通知郵件
+            // 3.發送成功通知郵件
             string subject = "MyGoParking!";
-            string emailMessage = $"<p>親愛的 {customer.Username}：</p>" +
-                                  $"<p>敬祝順利，感謝預約！</p>" +
-                                  $"<p>MyGoParking 團隊 敬上</p>";
+            string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
+                                    <p>敬祝順利，感謝預約！</p>
+                                    <p>MyGoParking 團隊 敬上</p>";
 
             try
             {
-                // 4. 發送成功通知郵件
-                await _sentmail.SendEmailAsync(customerEmail, subject, emailMessage);
-                Console.WriteLine($"成功發送郵件至 {customerEmail}");
+                await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
+                Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
             catch (Exception ex)
             {
-                // 錯誤處理，記錄錯誤訊息
+                // 捕捉並記錄郵件發送錯誤
                 Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
             }
 
