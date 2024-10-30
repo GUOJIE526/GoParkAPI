@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
+using StackExchange.Redis;
+using System.Text.Json;
 using System.Web;
 
 namespace GoParkAPI.Controllers
@@ -14,11 +16,16 @@ namespace GoParkAPI.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly EasyParkContext _context;
+        private readonly IConnectionMultiplexer _redis;
+        private readonly IDatabase _db;
+
         
-        public ParkingLotController(HttpClient httpClient, EasyParkContext context)
+        public ParkingLotController(HttpClient httpClient, EasyParkContext context, IConnectionMultiplexer redis)
         {
             _httpClient = httpClient;
             _context = context;
+            _redis = redis;
+            _db = redis.GetDatabase();
         }
 
         //接收前端傳來的字串
@@ -78,6 +85,14 @@ namespace GoParkAPI.Controllers
         {
             try
             {
+                string redisKey = "AllParkingLots";
+                var cacheParkingLots = await _db.StringGetAsync(redisKey);
+                if (!cacheParkingLots.IsNullOrEmpty)
+                {
+                    var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots);
+                    return Ok(LotsFromCache);
+                }
+
                 var parkingLots = await _context.ParkingLots.Select(p => new
                 {
                     lotId = p.LotId,
@@ -97,7 +112,7 @@ namespace GoParkAPI.Controllers
                     tel = p.Tel ?? "無資料",
                     validSpace = p.ValidSpace,
                 }).ToListAsync();
-
+                await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots), TimeSpan.FromHours(1));
                 return Ok(parkingLots);
             }
             catch (Exception e)

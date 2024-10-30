@@ -221,10 +221,13 @@ namespace GoParkAPI.Controllers
                 {
                     return BadRequest(new { Message = "無法取得用戶ID" });
                 }
-
+                var now = DateTime.Now;
+                if((resDTO.startTime - now).TotalHours > 6)
+                {
+                    return BadRequest(new { Message = "預約時間不能大於現在時間6小時" });
+                }
                 var reservationService = new ReservationService(_context);
                 var newReservation = await reservationService.CreateReservationAysnc(resDTO, userId);
-
                 var result = new
                 {
                     Message = "預約成功!",
