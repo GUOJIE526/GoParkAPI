@@ -58,6 +58,7 @@ builder.Services.AddScoped<MyPayService>();
 builder.Services.AddScoped<pwdHash>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<MonRentalService>();
+builder.Services.AddSignalR();
 
 //VAPID設置
 var vapidConfig = new VapidConfig(
@@ -79,8 +80,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.MapHub<ReservationHub>("/reservationHub"); // 設置 SignalR Hub 路徑
 app.UseCors(PolicyName);
-
 //CROS
 app.UseCors("AllowLocalhost");
 app.MapControllers();
