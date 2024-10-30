@@ -327,107 +327,92 @@ namespace GoParkAPI.Controllers
 
         // ------------------------ 發送月租付款申請開始 -------------------------------
 
-        //------------------------- 從前台接收UserId資訊，然後從後台返回資料-------------------------
-
-        [HttpPost("ListenUserId")]
-        public async Task<IActionResult> ListenUserId([FromBody] ListenUserDTO dto)
+        //------------------------------ 檢測停車開始 ------------------------------------
+        [HttpPost("testddd")]
+        public async Task<IActionResult> testddd([FromBody] ListenCarDTO dto)
         {
-            try
+            // 根據 licensePlate 查找對應的 Car 物件
+            var car = await _context.Car
+                .FirstOrDefaultAsync(c => c.LicensePlate == dto.licensePlate);
+
+            if (car == null)
             {
-                if (dto == null || dto.UserId <= 0)
-                {
-                    return BadRequest(new { message = "無效的 UserId。" });
-                }
-
-                // 獲取當前時間
-                var currentTime = DateTime.Now;
-
-                // 查詢車輛資料並關聯 EntryExitManagement 資料表
-                var userCars = await _context.Customer
-                    .Where(u => u.UserId == dto.UserId)
-                    .Join(_context.Car,
-                          u => u.UserId,
-                          c => c.UserId,
-                          (u, c) => new { u.UserId, Car = c })
-                    .Join(_context.EntryExitManagement,
-                          car => car.Car.CarId,
-                          entry => entry.CarId,
-                          (car, entry) => new
-                          {
-                              car.UserId,
-                              car.Car.CarId,
-                              car.Car.LicensePlate,
-                              entry.Parktype,
-                              entry.EntryTime
-                          })
-                    .Where(e => e.Parktype == "reservation") // 過濾出 ParkType 為 reservation 的紀錄
-                    .ToListAsync();
-
-                if (!userCars.Any())
-                {
-                    return NotFound(new { message = "找不到對應的用戶或車輛資料。" });
-                }
-
-                var carList = userCars.Select(car => new
-                {
-                    carId = car.CarId,
-                    licensePlate = car.LicensePlate,
-                    entryTime = car.EntryTime,
-                    // 使用 Math.Ceiling 強制進位
-                    hoursParked = car.EntryTime.HasValue
-                    ? Math.Ceiling((currentTime - car.EntryTime.Value).TotalHours)
-                    : (double?)null
-                }).ToList();
-
-                // 查詢可用的優惠券資料
-                var userCoupons = await _context.Customer
-                    .Where(u => u.UserId == dto.UserId)
-                    .Join(_context.Coupon,
-                          u => u.UserId,
-                          coup => coup.UserId,
-                          (u, coup) => new
-                          {
-                              UserId = u.UserId,
-                              CouponId = coup.CouponId,
-                              Amount = coup.DiscountAmount,
-                              IsUsed = coup.IsUsed,
-                              ValidFrom = coup.ValidFrom,
-                              ValidUntil = coup.ValidUntil
-                          })
-                    .Where(c => !c.IsUsed &&
-                                currentTime >= c.ValidFrom &&
-                                currentTime <= c.ValidUntil)
-                    .ToListAsync();
-
-                var couponList = userCoupons.Select(coupon => new
-                {
-                    couponId = coupon.CouponId,
-                    amount = coupon.Amount
-                }).ToList();
-
-                // 檢查是否有可用的優惠券
-                if (!couponList.Any())
-                {
-                    return NotFound(new { message = "沒有可用的優惠券。" });
-                }
-
-                // 回傳車輛和優惠券資料
-                return Ok(new
-                {
-                    userId = userCars.First().UserId,
-                    cars = carList, 
-                    coupons = couponList
-                });
+                // 如果找不到對應的車輛，回傳錯誤訊息
+                return NotFound(new { success = false, message = "未找到該車輛。" });
             }
-            catch (Exception ex)
+
+            // 根據 CarId 比對 EntryExitManagement 中的記錄
+            var entryExitRecord = await _context.EntryExitManagement
+                .Where(eem => eem.CarId == car.CarId)
+                .OrderByDescending(eem => eem.EntryTime) // 取最新的進入記錄
+                .FirstOrDefaultAsync();
+
+            if (entryExitRecord == null)
             {
-                return StatusCode(500, new { message = $"伺服器錯誤: {ex.Message}" });
+                // 如果找不到對應的出入管理記錄，回傳錯誤訊息
+                return NotFound(new { success = false, message = "未找到該車輛的出入管理記錄。" });
             }
+
+            // 根據 LotId 取得對應的停車場費率 (WeekdayRate)
+            var parkingLot = await _context.ParkingLots
+                .FirstOrDefaultAsync(lot => lot.LotId == entryExitRecord.LotId);
+
+            if (parkingLot == null)
+            {
+                // 如果找不到對應的停車場，回傳錯誤訊息
+                return BadRequest(new { success = false, message = "找不到對應的停車場資料。" });
+            }
+
+            // 設定 LicensePlateKeyinTime 為目前時間
+            entryExitRecord.LicensePlateKeyinTime = DateTime.Now;
+
+            // 計算停留時間（小時）
+            TimeSpan? duration = entryExitRecord.LicensePlateKeyinTime - entryExitRecord.EntryTime;
+
+            if (!duration.HasValue)
+            {
+                return BadRequest(new { success = false, message = "無法計算停留時間。" });
+            }
+
+            var durationHours = (int)Math.Ceiling(duration.Value.TotalHours); // 進位處理小時數
+
+            // 使用停車場的 WeekdayRate 計算金額
+            var amount = durationHours * parkingLot.WeekdayRate;
+
+            // 取得目前時間
+            var TimeNow = DateTime.Now;
+
+            // 根據 Car 的 UserId 查找符合條件的有效 Coupons
+            var coupons = await _context.Coupon
+                .Where(c => c.UserId == car.UserId &&
+                            !c.IsUsed &&
+                            TimeNow >= c.ValidFrom &&
+                            TimeNow <= c.ValidUntil)
+                .OrderBy(c => c.ValidUntil) // 以 ValidUntil 升序排序
+                .ToListAsync();
+
+            // 將符合條件的 CouponId 回傳
+            var couponIds = coupons.Select(c => new
+            {
+                CouponId = c.CouponId,
+                Amount = c.DiscountAmount,
+                EndTime = c.ValidUntil.Date.ToString("yyyy-MM-dd") // 日期格式化為指定字串格式
+            }).ToList();
+
+            // 回傳結果
+            return Ok(new
+            {
+                CarId = car.CarId,
+                LicensePlate = car.LicensePlate,
+                EntryTime = entryExitRecord.EntryTime,
+                LicensePlateKeyinTime = entryExitRecord.LicensePlateKeyinTime,
+                DurationHours = durationHours,
+                Amount = amount,
+                couponIds
+            });
         }
 
 
 
-
-        //------------------------------ 預約支付請求開始 ------------------------------------
     }
 }
