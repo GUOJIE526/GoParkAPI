@@ -54,26 +54,6 @@ builder.Services.AddScoped<pwdHash>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<MonRentalService>();
 
-// 配置 Hangfire，並設置使用 SQL Server 作為儲存
-builder.Services.AddHangfire(config =>
-{
-    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-          .UseSimpleAssemblyNameTypeSerializer()
-          .UseDefaultTypeSerializer()
-          .UseSqlServerStorage(builder.Configuration.GetConnectionString("EasyPark"), new SqlServerStorageOptions
-          {
-              CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-              SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-              QueuePollInterval = TimeSpan.Zero,
-              UseRecommendedIsolationLevel = true,
-              DisableGlobalLocks = true
-          });
-});
-
-// 啟用 Hangfire 服務
-builder.Services.AddHangfireServer();
-
-
 //VAPID設置
 var vapidConfig = new VapidConfig(
   publicKey: "BEOC-kXHgoTOx9oB89JAGbgZxr2w_IXEc_G4_0PACRCJOFtfx4hoT0hxslv1aGGmCSbrzpV-NSexuMjYuCyoMAM",
@@ -87,10 +67,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-// 啟用 Hangfire Dashboard
-app.UseHangfireDashboard();
-// 在應用啟動時設置 Recurring Job
-RecurringJob.AddOrUpdate<NotificationController>("CheckAndSendOverdueReminder", service => service.CheckAndSendOverdueReminder(), "*/1 * * * *"); // 每隔5分鐘執行一次
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

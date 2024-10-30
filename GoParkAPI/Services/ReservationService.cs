@@ -47,10 +47,6 @@ namespace GoParkAPI.Services
                 ValidUntil = validUntil, //保存計算結果
             };
 
-            _context.Reservation.Add(newRes);
-
-            //parkingLots.ValidSpace -= 1;//更新剩餘車位
-            await _context.SaveChangesAsync();
             return newRes;
         }
     }
