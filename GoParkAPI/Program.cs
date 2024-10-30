@@ -4,6 +4,7 @@ using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using GoParkAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<EasyParkContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("EasyPark"));
+});
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = builder.Configuration.GetConnectionString("RedisConnection");
+    return ConnectionMultiplexer.Connect(configuration);
 });
 
 builder.Services.AddHttpClient();
