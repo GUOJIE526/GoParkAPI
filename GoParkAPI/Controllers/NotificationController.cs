@@ -4,7 +4,6 @@ using GoParkAPI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WebPush;
 
 namespace GoParkAPI.Controllers
 {

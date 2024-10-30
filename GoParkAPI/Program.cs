@@ -3,8 +3,6 @@ using GoParkAPI.Controllers;
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using GoParkAPI.Services;
-using Hangfire;
-using Hangfire.SqlServer;
 using Microsoft.EntityFrameworkCore;
 
 
