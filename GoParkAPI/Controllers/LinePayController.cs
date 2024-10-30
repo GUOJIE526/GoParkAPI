@@ -395,7 +395,7 @@ namespace GoParkAPI.Controllers
             var couponIds = coupons.Select(c => new
             {
                 CouponId = c.CouponId,
-                Amount = c.DiscountAmount,
+                couponAmount = c.DiscountAmount,
                 EndTime = c.ValidUntil.Date.ToString("yyyy-MM-dd") // 日期格式化為指定字串格式
             }).ToList();
 
@@ -404,10 +404,10 @@ namespace GoParkAPI.Controllers
             {
                 CarId = car.CarId,
                 LicensePlate = car.LicensePlate,
-                EntryTime = entryExitRecord.EntryTime,
-                LicensePlateKeyinTime = entryExitRecord.LicensePlateKeyinTime,
+                EntryTime = entryExitRecord.EntryTime?.ToString("yyyy-MM-dd HH:mm") ?? "N/A", // 檢查是否為 null
+                LicensePlateKeyinTime = entryExitRecord.LicensePlateKeyinTime?.ToString("yyyy-MM-dd HH:mm") ?? "N/A", // 檢查是否為 null
                 DurationHours = durationHours,
-                Amount = amount,
+                PlateAmount = amount,
                 couponIds
             });
         }
