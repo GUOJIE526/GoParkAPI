@@ -6,4 +6,12 @@
         public int? UserId {  get; set; }
 
     }
+    public class UpdateEntryExitPaymenDTO
+    {
+        public int? MycouponId { get; set; }
+        public int MycarId { get; set; }
+        public int Myamount { get; set; }
+        
+    }
+    
 }
