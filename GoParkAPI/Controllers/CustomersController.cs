@@ -17,7 +17,7 @@ using NuGet.Protocol.Plugins;
 
 namespace GoParkAPI.Controllers
 {
-    [EnableCors("EasyParkCors")]
+    //[EnableCors("EasyParkCors")]
     [Route("api/[controller]")]
     [ApiController]
     public class CustomersController : ControllerBase

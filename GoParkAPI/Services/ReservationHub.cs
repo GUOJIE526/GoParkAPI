@@ -5,14 +5,11 @@ namespace GoParkAPI.Services
 {
     public class ReservationHub : Hub
     {
-        private static readonly ConcurrentDictionary<int, string> UserConnections = new ConcurrentDictionary<int, string>();
         // 發送通知給特定用戶
-        public async Task SendReminder(int userId, string message)
+        public async Task SendReminder(string userId, string title, string message)
         {
-            if (UserConnections.TryGetValue(userId, out var connectionId))
-            {
-                await Clients.Client(connectionId).SendAsync("ReceiveNotification", message);
-            }
+            // 向特定用戶發送通知
+            await Clients.User(userId).SendAsync("ReceiveNotification", title, message);
         }
     }
 }

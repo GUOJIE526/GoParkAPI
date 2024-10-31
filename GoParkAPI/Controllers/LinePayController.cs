@@ -1,6 +1,7 @@
 ﻿using GoParkAPI.DTO;
 using GoParkAPI.Models;
 using GoParkAPI.Services;
+using Hangfire;
 using Humanizer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,14 @@ namespace GoParkAPI.Controllers
         private readonly MyPayService _myPayService;
         private readonly EasyParkContext _context;
         private readonly MailService _sentmail;
-        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail, MyPayService myPayService)
+        private readonly PushNotificationService _pushNotification;
+        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail, MyPayService myPayService, PushNotificationService pushNotification)
         {
             _linePayService = linePayService;
             _context = context;
             _sentmail = sentmail;
             _myPayService = myPayService;
+            _pushNotification = pushNotification;
         }
 
         // ------------------------ 驗證月租方案是否相符開始 -------------------------------
@@ -204,6 +207,18 @@ namespace GoParkAPI.Controllers
                 var paymentResponse = await _linePayService.SendPaymentRequest(dto);
 
                 Reservation rentalRecord = _myPayService.ResMapDtoToModel(dto);
+
+        //--------------------------------HangFire付款後啟動---------------------------------
+                var user = await _context.Car.Where(c => c.CarId == dto.CarId).Select(c => c.UserId).FirstOrDefaultAsync();
+                if (user == null) 
+                {
+                    return BadRequest("找不到對應的用戶");
+                }
+                //啟動Hangfire CheckAndSendOverdueReminder
+                RecurringJob.AddOrUpdate($"OverdueReminder_{user}", () => _pushNotification.CheckAndSendOverdueReminder(user), "*/2 * * * *");
+                //啟動Hangfire CheckAlreadyOverdueRemider
+                RecurringJob.AddOrUpdate($"AlreadyOverdue_{user}", () => _pushNotification.CheckAlreadyOverdueRemider(user), "*/5 * * * *");
+        //--------------------------------HangFire付款後啟動---------------------------------
 
                 // 將租賃記錄新增到資料庫
                 await _context.Reservation.AddAsync(rentalRecord);

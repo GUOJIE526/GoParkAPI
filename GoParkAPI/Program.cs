@@ -3,9 +3,9 @@ using GoParkAPI.Controllers;
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using GoParkAPI.Services;
+using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.EntityFrameworkCore;
-using Quartz;
-using Quartz.Impl;
 using StackExchange.Redis;
 
 
@@ -25,33 +25,31 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 
 builder.Services.AddHttpClient();
 
-string PolicyName = "EasyParkCors";
+//string PolicyName = "EasyParkCors";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(PolicyName, policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("*").WithMethods("*").WithHeaders("*");
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
 
 // CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowLocalhost", policy =>
-    {
-        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173")
-              .AllowAnyMethod()
-              .AllowAnyHeader().AllowCredentials();
-    });
-});
+//builder.Services.AddCors(options =>
+//{
+//    options.AddDefaultPolicy(policy =>
+//    {
+//        policy.WithOrigins("*")
+//              .AllowAnyMethod()
+//              .AllowAnyHeader().AllowCredentials();
+//    });
+//});
 //----------------------------------------
 
 // 註冊 JsonProvider 作為 Singleton 服務
 builder.Services.AddSingleton<JsonProvider>();
-
 // 註冊 LinePayService 並使用 IHttpClientFactory
 builder.Services.AddHttpClient<LinePayService>();
-
 builder.Services.AddScoped<MyPayService>();
 
 //----------------------------------------
@@ -60,13 +58,26 @@ builder.Services.AddScoped<MyPayService>();
 builder.Services.AddScoped<pwdHash>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<MonRentalService>();
-//builder.Services.AddSignalR();
-//// 啟用 Quartz Hosted Service
-//builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
-//// 註冊服務
-//builder.Services.AddScoped<ReservationNotificationService>(); // Quartz 工作服務
-//builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
-//builder.Services.AddScoped<IJob, ReservationNotificationService>();
+
+// 配置 Hangfire，並設置使用 SQL Server 作為儲存
+builder.Services.AddHangfire(config =>
+{
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+          .UseSimpleAssemblyNameTypeSerializer()
+          .UseDefaultTypeSerializer()
+          .UseSqlServerStorage(builder.Configuration.GetConnectionString("EasyPark"), new SqlServerStorageOptions
+          {
+              CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+              SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+              QueuePollInterval = TimeSpan.Zero,
+              UseRecommendedIsolationLevel = true,
+              DisableGlobalLocks = true
+          });
+});
+
+// 啟用 Hangfire 服務
+builder.Services.AddHangfireServer();
+builder.Services.AddSignalR();
 //// 註冊 ReservationHub
 //builder.Services.AddSingleton<ReservationHub>();
 
@@ -83,7 +94,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
+// 在應用啟動時設置 Recurring Job
+//RecurringJob.AddOrUpdate<PushNotificationService>("CheckAndSendOverdueReminder", service => service.CheckAndSendOverdueReminder(), "*/2 * * * *"); // 每隔5分鐘執行一次
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -91,9 +103,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 //app.MapHub<ReservationHub>("/reservationHub"); // 設置 SignalR Hub 路徑
-app.UseCors(PolicyName);
+app.UseCors();
+// 啟用 Hangfire Dashboard
+app.UseHangfireDashboard();
+app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapHub<ReservationHub>("/reservationHub");
+});
+
 //CROS
-app.UseCors("AllowLocalhost");
+//app.UseCors("AllowLocalhost");
 app.MapControllers();
 
 app.UseHttpsRedirection();

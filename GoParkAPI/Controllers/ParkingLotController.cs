@@ -9,7 +9,7 @@ using System.Web;
 
 namespace GoParkAPI.Controllers
 {
-    [EnableCors("EasyParkCors")]
+    //[EnableCors("EasyParkCors")]
     [Route("api/[controller]")]
     [ApiController]
     public class ParkingLotController : ControllerBase
