@@ -8,4 +8,8 @@
     {
         public int UserId { get; set; }
     }
+    public class ListenCarDTO
+    {
+        public string licensePlate { get; set; }
+    }
 }

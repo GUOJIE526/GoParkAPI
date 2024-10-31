@@ -6,7 +6,7 @@
     public List<PackageDto> Packages { get; set; }
     public RedirectUrlsDto RedirectUrls { get; set; }
     public RequestOptionDto? Options { get; set; }
-    public string PlanId { get; set; }
+    public string? PlanId { get; set; }
     public int CarId {  get; set; }
     public int LotId { get; set; }
     public DateTime? StartTime { get; set; }

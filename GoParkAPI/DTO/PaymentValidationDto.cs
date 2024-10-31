@@ -9,9 +9,11 @@
 
     public class PaymentValidationDayDto
     {
-        public int lotId { get; set; }
         public int carId { get; set; }
+        public int LotId { get; set; }
         public int Amount { get; set; }
+        public int? couponsId { get; set; }
+
     }
 }
 
