@@ -86,21 +86,37 @@ namespace GoParkAPI.Controllers
             {
                 return "無法修改";
             }
-            Customer cust = await _context.Customer.FindAsync(id);
-            Car l = await _context.Car.FindAsync(id);
 
+            // 查找 Customer
+            Customer cust = await _context.Customer.FindAsync(id);
             if (cust == null)
             {
-                return "修改失敗";
+                return "無法找到會員資料";
             }
+
+            // 查找 Car，假設每個 Customer 對應一輛 Car
+            Car car = await _context.Car.FirstOrDefaultAsync(c => c.UserId == id);
+            if (car == null)
+            {
+                return "無法找到車輛資料";
+            }
+
+            // 更新 Customer 資料
             cust.Username = custDTO.Username;
-            cust.Password = custDTO.Password;
+            cust.Password = custDTO.Password; // 確保已經 hash 過密碼
             cust.Email = custDTO.Email;
             cust.Phone = custDTO.Phone;
-            l.LicensePlate = custDTO.LicensePlate;
+
+            // 更新 Car 的 LicensePlate
+            car.LicensePlate = custDTO.LicensePlate;
+
+            // 設定狀態為已修改
             _context.Entry(cust).State = EntityState.Modified;
+            _context.Entry(car).State = EntityState.Modified;
+
             try
             {
+                // 儲存修改
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -118,80 +134,177 @@ namespace GoParkAPI.Controllers
             return "修改成功";
         }
 
+
         // POST: api/Customers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+
         [HttpPost("sign")]
-        public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
+        public async Task<ActionResult> PostCustomer(CustomerDTO custDTO)
         {
-            
+            // 檢查是否已有相同的Email或車牌
             var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
             var existingCar = await _context.Car.FirstOrDefaultAsync(c => c.LicensePlate == custDTO.LicensePlate);
+
+            // 如果用戶不存在，並且車牌不存在
             if (customer == null && existingCar == null)
             {
-                //密碼加密加鹽
+                // 密碼加密與加鹽
                 var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
-                custDTO.Password = hashedPassword;//加密
-                custDTO.Salt = salt;//加鹽
+                custDTO.Password = hashedPassword;
+                custDTO.Salt = salt;
 
+                // 創建新用戶
                 Customer cust = new Customer
                 {
-                    //都允許空值 所以直接帶入填入資料 沒填的=>空值
-                    UserId = custDTO.UserId,
                     Username = custDTO.Username,
                     Password = custDTO.Password,
                     Salt = custDTO.Salt,
                     Email = custDTO.Email,
-                    Phone = custDTO.Phone,
+                    Phone = custDTO.Phone
                 };
-                _context.Customer.Add(cust);//加進資料庫 
-                await _context.SaveChangesAsync();//存檔
 
-                
-               
-                    Car car = new Car
-                    {
-                        CarId = 0,//填預設值 系統會覆蓋
-                        LicensePlate = custDTO.LicensePlate,//填入的車牌
-                        UserId = cust.UserId,//對應已經覆蓋的id
-                        IsActive = true,//填預設值
-                    };
+                // 將新用戶添加到資料庫
+                _context.Customer.Add(cust);
+                await _context.SaveChangesAsync();
 
-                    _context.Car.Add(car);//加進資料庫
-                    await _context.SaveChangesAsync();//存檔
-               
-                // 檢查 Email 是否存在並發送確認郵件
+                // 創建用戶的車輛資料
+                Car car = new Car
+                {
+                    LicensePlate = custDTO.LicensePlate,
+                    UserId = cust.UserId, // 使用剛創建的用戶ID
+                    IsActive = true
+                };
+
+                // 將車輛資料添加到資料庫
+                _context.Car.Add(car);
+                await _context.SaveChangesAsync();
+
+                // 發送歡迎郵件
                 if (!string.IsNullOrEmpty(custDTO.Email))
                 {
                     string subject = "歡迎加入 MyGoParking!";
-                    string message = $"<p>親愛的用戶： 感謝您註冊，您已註冊成功!  <br> 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
+                    string message = $"<p>親愛的用戶：感謝您註冊，您已成功加入！<br>敬祝順利<br>mygoParking團隊</p>";
 
                     try
                     {
-                        await _sentmail.SendEmailAsync(custDTO.Email, subject, message); // 發送信件
+                        await _sentmail.SendEmailAsync(custDTO.Email, subject, message);
                     }
                     catch (Exception ex)
                     {
                         // 錯誤處理
-                        Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+                        Console.WriteLine($"發送郵件失敗: {ex.Message}");
                     }
                 }
-                var id = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
-                return Ok(new { exit = true, userId = id.UserId, message = "註冊成功!" });
-                                                                                   
+
+                // 回傳註冊成功的完整用戶資料給前端
+                return Ok(new
+                {
+                    exit = true,
+                    message = "註冊成功!",
+                    userId = cust.UserId,
+                    username = cust.Username,
+                    email = cust.Email,
+                    phone = cust.Phone,
+                    licensePlate = car.LicensePlate,
+                    password = cust.Password, // 回傳加密後的密碼
+                    salt = cust.Salt
+                });
             }
-            else if(customer != null)
+            // 檢查帳號是否已存在
+            else if (customer != null)
             {
-                return Ok(new { message="此帳號已註冊!"});
+                return Ok(new { message = "此帳號已註冊!" });
             }
-            else if(existingCar != null)
+            // 檢查車牌是否已存在
+            else if (existingCar != null)
             {
                 return Ok(new { message = "此車牌已存在!" });
             }
             else
             {
-                return Ok(new { message = "請洽客服人員" });
+                return Ok(new { message = "請洽客服人員!" });
             }
         }
+
+
+
+
+
+
+
+
+        //[HttpPost("sign")]
+        //public async Task<ActionResult<CustomerDTO>> PostCustomer(CustomerDTO custDTO)
+        //{
+
+        //    var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
+        //    var existingCar = await _context.Car.FirstOrDefaultAsync(c => c.LicensePlate == custDTO.LicensePlate);
+        //    if (customer == null && existingCar == null)
+        //    {
+        //        //密碼加密加鹽
+        //        var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
+        //        custDTO.Password = hashedPassword;//加密
+        //        custDTO.Salt = salt;//加鹽
+
+        //        Customer cust = new Customer
+        //        {
+        //            //都允許空值 所以直接帶入填入資料 沒填的=>空值
+        //            UserId = custDTO.UserId,
+        //            Username = custDTO.Username,
+        //            Password = custDTO.Password,
+        //            Salt = custDTO.Salt,
+        //            Email = custDTO.Email,
+        //            Phone = custDTO.Phone,
+        //        };
+        //        _context.Customer.Add(cust);//加進資料庫 
+        //        await _context.SaveChangesAsync();//存檔
+
+
+
+        //            Car car = new Car
+        //            {
+        //                CarId = 0,//填預設值 系統會覆蓋
+        //                LicensePlate = custDTO.LicensePlate,//填入的車牌
+        //                UserId = cust.UserId,//對應已經覆蓋的id
+        //                IsActive = true,//填預設值
+        //            };
+
+        //            _context.Car.Add(car);//加進資料庫
+        //            await _context.SaveChangesAsync();//存檔
+
+        //        // 檢查 Email 是否存在並發送確認郵件
+        //        if (!string.IsNullOrEmpty(custDTO.Email))
+        //        {
+        //            string subject = "歡迎加入 MyGoParking!";
+        //            string message = $"<p>親愛的用戶： 感謝您註冊，您已註冊成功!  <br> 敬祝順利 <br> mygoParking團隊 </p> "; // 郵件內容
+
+        //            try
+        //            {
+        //                await _sentmail.SendEmailAsync(custDTO.Email, subject, message); // 發送信件
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                // 錯誤處理
+        //                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+        //            }
+        //        }
+        //        var id = await _context.Customer.FirstOrDefaultAsync(c => c.Email == custDTO.Email);
+        //        return Ok(new { exit = true, userId = id.UserId, message = "註冊成功!", });
+
+        //    }
+        //    else if(customer != null)
+        //    {
+        //        return Ok(new { message="此帳號已註冊!"});
+        //    }
+        //    else if(existingCar != null)
+        //    {
+        //        return Ok(new { message = "此車牌已存在!" });
+        //    }
+        //    else
+        //    {
+        //        return Ok(new { message = "請洽客服人員" });
+        //    }
+        //}
 
 
         [HttpPost("reset")]
@@ -255,11 +368,6 @@ namespace GoParkAPI.Controllers
         public IActionResult Login(LoginsDTO login)
 
         {
-            //string userName = "";
-            //string email = "";
-            //string password = "";
-            //string licensePlate = "";
-            //string phone = "";
             bool exit = false;
             string message = "";
             int UserId = 0;
@@ -280,11 +388,6 @@ namespace GoParkAPI.Controllers
                 }
                 else
                 {
-                    //userName = member.Username;
-                    //email = member.Email;
-                    //phone = member.Phone;
-                    //licensePlate = ;
-                    //password = member.Password;
                     exit = true;
                     message = "登入成功";
                     UserId = member.UserId;
@@ -295,38 +398,64 @@ namespace GoParkAPI.Controllers
                 exit = false;
                 message = "無此帳號";
             }
-            exitDTO exitDTO = new exitDTO
+            ExitDTO exitDTO = new ExitDTO
             {
-                //Username = userName,
-                //Email = email,
-                //Phone = phone,
-                //LicensePlate = licensePlate,
-                //Password = password,
-                exit = exit,
+                Exit = exit,
                 UserId = UserId,
-                message = message,
+                Message = message,
             };
             return Ok(exitDTO);
 
         }
 
-        // DELETE: api/Customers/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteCustomer(int id)
-        //{
-        //    var customer = await _context.Customer.FindAsync(id);
-        //    if (customer == null)
-        //    {
-        //        return NotFound();
-        //    }
+        [HttpPost("coupon")]
+        public async Task<ActionResult<CouponDTO>> AddCoupon(CouponDTO coupDTO)
+        {
+            var userId = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == coupDTO.UserId);
 
-        //    _context.Customer.Remove(customer);
-        //    await _context.SaveChangesAsync();
+            if (userId != null)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    Coupon coup = new Coupon
+                    {
+                        CouponId = coupDTO.CouponId,
+                        CouponCode = coupDTO.CouponCode,
+                        DiscountAmount = coupDTO.DiscountAmount,
+                        ValidFrom = coupDTO.ValidFrom,
+                        ValidUntil = coupDTO.ValidUntil,
+                        IsUsed = coupDTO.IsUsed,
+                        UserId = coupDTO.UserId
+                    };
+                    _context.Coupon.Add(coup);//加進資料庫 
+                }
+                await _context.SaveChangesAsync();//存檔 
+                return Ok(new { message = "成功領取三張優惠券!" });
+            }
+            else if(userId == null)
+            {
+                return Ok(new { message = "領取失敗,您尚未註冊或登入"});
+            }
+            return Ok(new { message = "領取失敗, 請洽客服人員" });
+        }
 
-        //    return NoContent();
-        //}
+            // DELETE: api/Customers/5
+            //[HttpDelete("{id}")]
+            //public async Task<IActionResult> DeleteCustomer(int id)
+            //{
+            //    var customer = await _context.Customer.FindAsync(id);
+            //    if (customer == null)
+            //    {
+            //        return NotFound();
+            //    }
 
-        private bool CustomerExists(int id)
+            //    _context.Customer.Remove(customer);
+            //    await _context.SaveChangesAsync();
+
+            //    return NoContent();
+            //}
+
+            private bool CustomerExists(int id)
         {
             return _context.Customer.Any(e => e.UserId == id);
         }
