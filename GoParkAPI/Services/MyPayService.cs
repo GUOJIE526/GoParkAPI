@@ -46,7 +46,7 @@ namespace GoParkAPI.Services
             {
                 CarId = dto.CarId,
                 LotId = dto.LotId,
-                StartDate = DateTime.Today,
+                StartDate = dto.StartTime,
                 EndDate = startDate.AddMonths(rentalMonths),
                 Amount = dto.Amount,
                 PaymentStatus = false,
