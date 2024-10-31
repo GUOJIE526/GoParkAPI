@@ -4,6 +4,8 @@ using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using GoParkAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Quartz;
+using Quartz.Impl;
 using StackExchange.Redis;
 
 
@@ -37,9 +39,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost", policy =>
     {
-        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173")
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173", "https://localhost:7077")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader().AllowCredentials();
     });
 });
 //----------------------------------------
@@ -59,6 +61,14 @@ builder.Services.AddScoped<pwdHash>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<MonRentalService>();
 builder.Services.AddSignalR();
+// 啟用 Quartz Hosted Service
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+// 註冊服務
+builder.Services.AddScoped<ReservationNotificationService>(); // Quartz 工作服務
+builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+builder.Services.AddScoped<IJob, ReservationNotificationService>();
+// 註冊 ReservationHub
+builder.Services.AddSingleton<ReservationHub>();
 
 //VAPID設置
 var vapidConfig = new VapidConfig(
