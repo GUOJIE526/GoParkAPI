@@ -303,6 +303,12 @@ namespace GoParkAPI.Services
             // 6. 計算最終金額
             var finalAmount = originalAmount - discountAmount;
 
+            // 如果最終金額小於 0，強制設定為 0
+            if (finalAmount < 0)
+            {
+                finalAmount = 0;
+            }
+
             // 7. 驗證傳入的金額是否正確
             if (finalAmount != dto.Amount)
             {
