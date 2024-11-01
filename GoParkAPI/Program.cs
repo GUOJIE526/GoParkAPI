@@ -67,8 +67,8 @@ builder.Services.AddHangfire(config =>
           .UseDefaultTypeSerializer()
           .UseSqlServerStorage(builder.Configuration.GetConnectionString("EasyPark"), new SqlServerStorageOptions
           {
-              CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-              SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+              CommandBatchMaxTimeout = TimeSpan.FromMinutes(30),
+              SlidingInvisibilityTimeout = TimeSpan.FromMinutes(35),
               QueuePollInterval = TimeSpan.Zero,
               UseRecommendedIsolationLevel = true,
               DisableGlobalLocks = true

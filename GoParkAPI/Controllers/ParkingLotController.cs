@@ -85,13 +85,13 @@ namespace GoParkAPI.Controllers
         {
             try
             {
-                string redisKey = "AllParkingLots";
-                var cacheParkingLots = await _db.StringGetAsync(redisKey);
-                if (!cacheParkingLots.IsNullOrEmpty)
-                {
-                    var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots);
-                    return Ok(LotsFromCache);
-                }
+                //string redisKey = "AllParkingLots";
+                //var cacheParkingLots = await _db.StringGetAsync(redisKey);
+                //if (!cacheParkingLots.IsNullOrEmpty)
+                //{
+                //    var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots);
+                //    return Ok(LotsFromCache);
+                //}
 
                 var parkingLots = await _context.ParkingLots.Select(p => new
                 {
@@ -106,13 +106,13 @@ namespace GoParkAPI.Controllers
                     RateRules = p.RateRules ?? "無資料",
                     weekdayRate = p.WeekdayRate,
                     holidayRate = p.HolidayRate,
-                    MonRate = p.MonRentalRate,
+                    monRate = p.MonRentalRate,
                     resDeposit = p.ResDeposit,
                     opendoorTime = p.OpendoorTime ?? "無資料",
                     tel = p.Tel ?? "無資料",
                     validSpace = p.ValidSpace,
                 }).ToListAsync();
-                await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots), TimeSpan.FromHours(1));
+                //await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots), TimeSpan.FromMinutes(10));
                 return Ok(parkingLots);
             }
             catch (Exception e)

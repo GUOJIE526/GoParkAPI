@@ -208,23 +208,30 @@ namespace GoParkAPI.Controllers
 
                 Reservation rentalRecord = _myPayService.ResMapDtoToModel(dto);
 
-        //--------------------------------HangFire付款後啟動---------------------------------
-                var user = await _context.Car.Where(c => c.CarId == dto.CarId).Select(c => c.UserId).FirstOrDefaultAsync();
-                if (user == null) 
-                {
-                    return BadRequest("找不到對應的用戶");
-                }
-                //啟動Hangfire CheckAndSendOverdueReminder
-                RecurringJob.AddOrUpdate($"OverdueReminder_{user}", () => _pushNotification.CheckAndSendOverdueReminder(user), "*/2 * * * *");
-                //啟動Hangfire CheckAlreadyOverdueRemider
-                RecurringJob.AddOrUpdate($"AlreadyOverdue_{user}", () => _pushNotification.CheckAlreadyOverdueRemider(user), "*/5 * * * *");
-        //--------------------------------HangFire付款後啟動---------------------------------
-
                 // 將租賃記錄新增到資料庫
                 await _context.Reservation.AddAsync(rentalRecord);
 
                 // 保存變更
                 await _context.SaveChangesAsync();
+
+                //--------------------------------HangFire付款後啟動---------------------------------
+                var user = await _context.Car.Where(c => c.CarId == dto.CarId).Select(c => c.UserId).FirstOrDefaultAsync();
+                if (user == null)
+                {
+                    return BadRequest("找不到對應的用戶");
+                }
+                // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
+                //var latestRes = await _context.Reservation
+                //    .Where(r => r.CarId == dto.CarId)
+                //    .OrderByDescending(r => r.ResId)
+                //    .Select(r => r.ResId)
+                //    .FirstOrDefaultAsync();
+                //啟動Hangfire CheckAndSendOverdueReminder
+                RecurringJob.AddOrUpdate("OverdueReminder", () => _pushNotification.CheckAndSendOverdueReminder(), "*/2 * * * *");
+                //啟動Hangfire CheckAlreadyOverdueRemider
+                RecurringJob.AddOrUpdate("AlreadyOverdueReminder", () => _pushNotification.CheckAlreadyOverdueRemider(), "*/3 * * * *");
+                //--------------------------------HangFire付款後啟動---------------------------------
+
 
                 // 回傳支付結果
                 return Ok(paymentResponse);

@@ -54,66 +54,54 @@ namespace GoParkAPI.Services
             }
         }
 
-        public async Task CheckAndSendOverdueReminder(int userId)
+        public async Task<bool> CheckAndSendOverdueReminder()
         {
             var now = DateTime.Now;
             var minutesLater = now.AddMinutes(30);
 
-            // 獲取該使用者的所有車輛
-            var userCars = await _context.Car.Where(x => x.UserId == userId).Select(c => c.CarId).ToListAsync();
-            //檢查未發送通知的預約提醒
-            var reservation = await _context.Reservation.Where(r => userCars.Contains(r.CarId) && !r.IsFinish && !r.NotificationStatus && r.PaymentStatus && r.StartTime <= minutesLater && r.StartTime > now).ToListAsync();
+            // 根據條件查找第一個符合條件的 Reservation 記錄
+            var res = await _context.Reservation
+                .FirstOrDefaultAsync(r => !r.IsFinish
+                                       && !r.NotificationStatus
+                                       && r.StartTime <= minutesLater
+                                       && r.StartTime > now
+                                       && r.PaymentStatus);
 
-            if (!reservation.Any())
+            // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
+            if (res == null)
             {
-                // 如果該用戶所有預約都已完成，則停止排程
-                RecurringJob.RemoveIfExists($"OverdueReminder_{userId}");
-                return;
+                // 如果不依賴具體的 resId 可以省略 RemoveIfExists
+                RecurringJob.RemoveIfExists($"OverdueReminder");
+                return false;
             }
-
-            if (reservation.Any())
-            {
-                //發送通知和更新紀錄
-                foreach (var res in reservation)
-                {
-                    await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時, 請在安全前提下盡快入場, 逾時車位不保留.");
-                    res.NotificationStatus = true;
-                }
-
-                //批量更新
-                await _context.SaveChangesAsync();
-            }
+            res.NotificationStatus = true;
+            await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
+            return true;
         }
 
-        public async Task CheckAlreadyOverdueRemider(int userId)
+        public async Task<bool> CheckAlreadyOverdueRemider()
         {
             var now = DateTime.Now;
-            var userCars = await _context.Car.Where(x => x.UserId == userId).Select(c => c.CarId).ToListAsync();
-            var res = await _context.Reservation.Where(r => userCars.Contains(r.CarId) && r.ValidUntil <= now && r.NotificationStatus && r.PaymentStatus && !r.IsFinish).ToListAsync();
-
-            if (!res.Any())
+            var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ValidUntil < now && !r.IsFinish);
+            var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
+            var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
+            //var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
+            if (reservation == null)
             {
-                // 如果該用戶所有預約都已完成，則停止排程
-                RecurringJob.RemoveIfExists($"AlreadyOverdue_{userId}");
-                return;
+                RecurringJob.RemoveIfExists($"AlreadyOverdueReminder");
+                return false;
             }
-
-            if (res.Any())
+            reservation.IsFinish = true;
+            reservation.IsOverdue = true;
+            user.BlackCount += 1;
+            if(user.BlackCount >= 3)
             {
-                var cust = await _context.Customer.FirstOrDefaultAsync(c => c.UserId == userId);
-                foreach(var re in res)
-                {
-                    await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", "預約超時", "您的預約已超時!");
-                    re.IsFinish = true;
-                    re.IsOverdue = true;
-                }
-                cust.BlackCount += 1;
-                if(cust.BlackCount >= 3)
-                {
-                    cust.IsBlack = true;
-                }
-                await _context.SaveChangesAsync();
+                user.IsBlack = true;
             }
+            await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約超時提醒", "你的預約已超時!!");
+            return true;
         }
     }
 }
