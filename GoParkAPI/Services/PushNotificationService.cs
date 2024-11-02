@@ -54,54 +54,57 @@ namespace GoParkAPI.Services
             }
         }
 
-        public async Task<bool> CheckAndSendOverdueReminder()
+        public async Task<bool> CheckAndSendOverdueReminder(int resId)
         {
             var now = DateTime.Now;
             var minutesLater = now.AddMinutes(30);
 
             // 根據條件查找第一個符合條件的 Reservation 記錄
-            var res = await _context.Reservation
-                .FirstOrDefaultAsync(r => !r.IsFinish
-                                       && !r.NotificationStatus
-                                       && r.StartTime <= minutesLater
-                                       && r.StartTime > now
-                                       && r.PaymentStatus);
+            var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
 
             // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
-            if (res == null)
+            if (res == null || res.IsFinish || res.NotificationStatus)
             {
-                // 如果不依賴具體的 resId 可以省略 RemoveIfExists
-                RecurringJob.RemoveIfExists($"OverdueReminder");
+                RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
                 return false;
             }
-            res.NotificationStatus = true;
-            await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
-            return true;
+            if (res.StartTime <= minutesLater && res.StartTime > now && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
+            {
+                res.NotificationStatus = true;
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
+                return true;
+            }
+            RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
+            return false;
         }
-
-        public async Task<bool> CheckAlreadyOverdueRemider()
+        public async Task<bool> CheckAlreadyOverdueRemider(int resId)
         {
             var now = DateTime.Now;
-            var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ValidUntil < now && !r.IsFinish);
+            var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
             var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
             var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
-            //var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
-            if (reservation == null)
+            if (reservation.ValidUntil < now && !reservation.IsFinish && reservation.NotificationStatus)
             {
-                RecurringJob.RemoveIfExists($"AlreadyOverdueReminder");
+                reservation.IsFinish = true;
+                reservation.IsOverdue = true;
+                user.BlackCount += 1;
+                if (user.BlackCount >= 3)
+                {
+                    user.IsBlack = true;
+                }
+                await _context.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約超時提醒", "你的預約已超時!!");
+                return true;
+            }
+            if (reservation == null || reservation.IsFinish)
+            {
+                RecurringJob.RemoveIfExists($"AlreadyOverdueReminder_{resId}");
                 return false;
             }
-            reservation.IsFinish = true;
-            reservation.IsOverdue = true;
-            user.BlackCount += 1;
-            if(user.BlackCount >= 3)
-            {
-                user.IsBlack = true;
-            }
-            await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約超時提醒", "你的預約已超時!!");
-            return true;
+
+            RecurringJob.RemoveIfExists($"AlreadyOverdueReminder_{resId}");
+            return false;
         }
     }
 }

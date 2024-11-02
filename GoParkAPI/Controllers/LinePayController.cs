@@ -221,15 +221,15 @@ namespace GoParkAPI.Controllers
                     return BadRequest("找不到對應的用戶");
                 }
                 // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
-                //var latestRes = await _context.Reservation
-                //    .Where(r => r.CarId == dto.CarId)
-                //    .OrderByDescending(r => r.ResId)
-                //    .Select(r => r.ResId)
-                //    .FirstOrDefaultAsync();
+                var latestRes = await _context.Reservation
+                    .Where(r => r.CarId == dto.CarId)
+                    .OrderByDescending(r => r.ResId)
+                    .Select(r => r.ResId)
+                    .FirstOrDefaultAsync();
                 //啟動Hangfire CheckAndSendOverdueReminder
-                RecurringJob.AddOrUpdate("OverdueReminder", () => _pushNotification.CheckAndSendOverdueReminder(), "*/2 * * * *");
+                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/2 * * * *");
                 //啟動Hangfire CheckAlreadyOverdueRemider
-                RecurringJob.AddOrUpdate("AlreadyOverdueReminder", () => _pushNotification.CheckAlreadyOverdueRemider(), "*/3 * * * *");
+                RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{latestRes}", () => _pushNotification.CheckAlreadyOverdueRemider(latestRes), "*/3 * * * *");
                 //--------------------------------HangFire付款後啟動---------------------------------
 
 

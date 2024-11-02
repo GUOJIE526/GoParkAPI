@@ -27,12 +27,12 @@ namespace GoParkAPI.Services
             await base.OnConnectedAsync();
         }
 
-        public async Task SendOverdueReminderNotification(string userId)
+        public async Task SendOverdueReminderNotification(int resId, string userId)
         {
-            var notificationSent = await _pushNotificationService.CheckAndSendOverdueReminder();
+            var notificationSent = await _pushNotificationService.CheckAndSendOverdueReminder(resId);
             if (notificationSent && UserConnections.TryGetValue(userId, out string connectionId))
             {
-                await Clients.All.SendAsync(
+                await Clients.Client(connectionId).SendAsync(
                     "ReceiveNotification",
                     "預約提醒",
                     "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。"
@@ -40,12 +40,12 @@ namespace GoParkAPI.Services
             }
         }
 
-        public async Task SendAlreadyOverdueReminderNotification(string userId)
+        public async Task SendAlreadyOverdueReminderNotification(int resId, string userId)
         {
-            var notificationSent = await _pushNotificationService.CheckAlreadyOverdueRemider();
+            var notificationSent = await _pushNotificationService.CheckAlreadyOverdueRemider(resId);
             if (notificationSent && UserConnections.TryGetValue(userId, out string connectionId))
             {
-                await Clients.All.SendAsync(
+                await Clients.Client(connectionId).SendAsync(
                     "ReceiveNotification",
                     "預約超時提醒",
                     "你的預約已超時!!"
