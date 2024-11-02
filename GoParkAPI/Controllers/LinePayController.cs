@@ -228,8 +228,6 @@ namespace GoParkAPI.Controllers
                     .FirstOrDefaultAsync();
                 //啟動Hangfire CheckAndSendOverdueReminder
                 RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/2 * * * *");
-                //啟動Hangfire CheckAlreadyOverdueRemider
-                RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{latestRes}", () => _pushNotification.CheckAlreadyOverdueRemider(latestRes), "*/3 * * * *");
                 //--------------------------------HangFire付款後啟動---------------------------------
 
 

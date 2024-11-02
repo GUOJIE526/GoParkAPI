@@ -62,20 +62,21 @@ namespace GoParkAPI.Services
             // 根據條件查找第一個符合條件的 Reservation 記錄
             var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
 
-            // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
-            if (res == null || res.IsFinish || res.NotificationStatus)
-            {
-                RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
-                return false;
-            }
             if (res.StartTime <= minutesLater && res.StartTime > now && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
             {
                 res.NotificationStatus = true;
                 await _context.SaveChangesAsync();
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
+                //啟動Hangfire CheckAlreadyOverdueRemider
+                RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/2 * * * *");
                 return true;
             }
-            RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
+            // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
+            if (res.IsFinish || res.NotificationStatus)
+            {
+                RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
+                return false;
+            }
             return false;
         }
         public async Task<bool> CheckAlreadyOverdueRemider(int resId)
@@ -97,13 +98,12 @@ namespace GoParkAPI.Services
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約超時提醒", "你的預約已超時!!");
                 return true;
             }
-            if (reservation == null || reservation.IsFinish)
+            if (reservation.IsFinish)
             {
                 RecurringJob.RemoveIfExists($"AlreadyOverdueReminder_{resId}");
                 return false;
             }
 
-            RecurringJob.RemoveIfExists($"AlreadyOverdueReminder_{resId}");
             return false;
         }
     }
