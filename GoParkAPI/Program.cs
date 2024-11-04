@@ -3,6 +3,7 @@ using GoParkAPI.Controllers;
 using GoParkAPI.Models;
 using GoParkAPI.Providers;
 using GoParkAPI.Services;
+using GoParkAPI.Services.Domain;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,13 @@ builder.Services.AddScoped<MyPayService>();
 builder.Services.AddScoped<pwdHash>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<MonRentalService>();
+
+
+//-------------Line Bot-------------------
+//註冊Line Bot Service
+builder.Services.AddScoped<LineBotService>();
+//將HttpClient，注入到 LineBotService 中使用
+builder.Services.AddHttpClient<LineBotService>();
 
 // 配置 Hangfire，並設置使用 SQL Server 作為儲存
 builder.Services.AddHangfire(config =>
