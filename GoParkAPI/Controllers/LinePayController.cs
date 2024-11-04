@@ -3,6 +3,7 @@ using GoParkAPI.Models;
 using GoParkAPI.Services;
 using Hangfire;
 using Humanizer;
+using MailKit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -127,22 +128,40 @@ namespace GoParkAPI.Controllers
                 return NotFound(new { success = false, message });
             }
 
-            // 3. 發送成功通知郵件
-            string subject = "MyGoParking!";
-            string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
-                                    <p>敬祝順利，感謝申請月租！</p>
-                                    <p>MyGoParking 團隊 敬上</p>";
+            //// 3. 發送成功通知郵件
+            //string subject = "MyGoParking!";
+            //string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
+            //                        <p>敬祝順利，感謝申請月租！</p>
+            //                        <p>MyGoParking 團隊 敬上</p>";
 
-            try
+
+            // 準備佔位符的值
+            var placeholders = new Dictionary<string, string>
             {
-                await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
-                Console.WriteLine($"成功發送郵件至 {customer.Email}");
-            }
-            catch (Exception ex)
-            {
-                // 捕捉並記錄郵件發送錯誤
-                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
-            }
+                { "username", customer.Username},
+                { "message", "您的月租已確認，感謝您使用 MyGoParking！" }
+            };
+
+            // 指定模板路徑
+            string templatePath = "Templates/EmailTemplate.html";
+
+            // 讀取模板並替換佔位符
+            string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
+
+            // 發送郵件
+            await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
+
+
+            //try
+            //{
+            //    await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
+            //    Console.WriteLine($"成功發送郵件至 {customer.Email}");
+            //}
+            //catch (Exception ex)
+            //{
+            //    // 捕捉並記錄郵件發送錯誤
+            //    Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            //}
 
             // 4. 返回成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
