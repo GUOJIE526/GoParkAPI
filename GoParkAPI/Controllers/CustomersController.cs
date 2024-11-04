@@ -100,7 +100,7 @@ namespace GoParkAPI.Controllers
             {
                 return "無法找到車輛資料";
             }
-
+  
             // 密碼加密與加鹽
             var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
             custDTO.Password = hashedPassword;
