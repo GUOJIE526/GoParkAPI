@@ -69,7 +69,7 @@ namespace GoParkAPI.Services
                 await _context.SaveChangesAsync();
                 await _hubContext.Clients.User(user.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
                 //啟動Hangfire CheckAlreadyOverdueRemider
-                RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/2 * * * *");
+                RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/1 * * * *");
                 return true;
             }
             // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
