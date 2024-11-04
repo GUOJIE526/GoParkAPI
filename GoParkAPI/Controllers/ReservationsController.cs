@@ -43,6 +43,8 @@ namespace GoParkAPI.Controllers
                     resId = res.ResId,
                     resTime = (DateTime)res.ResTime,
                     lotName = res.Lot.LotName,
+                    district = res.Lot.District,
+                    location = res.Lot.Location,                    
                     licensePlate = res.Car.LicensePlate,
                     startTime = (DateTime)res.StartTime,
                     validUntil = (DateTime)res.ValidUntil,  //還在進行中的預定要顯示
@@ -63,8 +65,8 @@ namespace GoParkAPI.Controllers
         }
 
         //搜尋"停車場"載入預定紀錄
-        [HttpGet("search/{lotName}")]
-        public async Task<IEnumerable<ReservationDTO>> SearchReservationsByLotname(int userId, string lotName)
+        [HttpGet("search")]
+        public async Task<IEnumerable<ReservationDTO>> SearchReservationsByLotname(int userId, string district)
         {
             //根據 userId抓出用戶的車牌號碼
             var userCars = await GetUserCars(userId);
@@ -72,13 +74,15 @@ namespace GoParkAPI.Controllers
 
             // 根據停車場名稱模糊查詢訂單
             var reservations = _context.Reservation
-                .Where(res => userCars.Contains(res.Car.LicensePlate) && res.Lot.LotName.Contains(lotName))
+                .Where(res => userCars.Contains(res.Car.LicensePlate) && res.Lot.District.Contains(district))
                 .Select(res => new ReservationDTO
                 {
                     resId = res.ResId,
                     licensePlate = res.Car.LicensePlate,
                     resTime = (DateTime)res.ResTime,
                     lotName = res.Lot.LotName,
+                    district = res.Lot.District,
+                    location = res.Lot.Location,
                     isCanceled = res.IsCanceled,
                     isOverdue = res.IsOverdue,
                     isFinish = res.IsFinish,
@@ -126,6 +130,8 @@ namespace GoParkAPI.Controllers
                 resId = res.ResId,
                 resTime = (DateTime)res.ResTime,
                 lotName = res.Lot.LotName,
+                district = res.Lot.District,
+                location = res.Lot.Location,
                 licensePlate = res.Car.LicensePlate,
                 startTime = (DateTime)res.StartTime,
                 validUntil = (DateTime)res.ValidUntil,  //還在進行中的預定要顯示

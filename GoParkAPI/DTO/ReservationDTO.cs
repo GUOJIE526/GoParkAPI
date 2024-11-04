@@ -8,6 +8,8 @@
 
         public string lotName { get; set; } = null!;
 
+        public string? district { get; set; } = null!;
+
         public string? location { get; set; } = null!;
 
         public string licensePlate { get; set; } = null!;
