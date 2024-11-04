@@ -14,6 +14,7 @@ using GoParkAPI.DTO;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection.XmlEncryption;
 using NuGet.Protocol.Plugins;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace GoParkAPI.Controllers
 {
@@ -100,7 +101,11 @@ namespace GoParkAPI.Controllers
             {
                 return "無法找到車輛資料";
             }
-  
+
+
+
+
+
             // 密碼加密與加鹽
             var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
             custDTO.Password = hashedPassword;
@@ -109,6 +114,7 @@ namespace GoParkAPI.Controllers
             // 更新 Customer 資料
             cust.Username = custDTO.Username;
             cust.Password = custDTO.Password; // 確保已經 hash 過密碼
+            cust.Salt = custDTO.Salt;
             cust.Email = custDTO.Email;
             cust.Phone = custDTO.Phone;
 
