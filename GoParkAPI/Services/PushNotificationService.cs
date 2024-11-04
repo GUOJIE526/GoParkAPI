@@ -61,12 +61,13 @@ namespace GoParkAPI.Services
 
             // 根據條件查找第一個符合條件的 Reservation 記錄
             var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
+            var user = await _context.Reservation.Where(r => r.ResId == resId).Select(r => r.Car.UserId).FirstOrDefaultAsync();
 
             if (res.StartTime <= minutesLater && res.StartTime > now && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
             {
                 res.NotificationStatus = true;
                 await _context.SaveChangesAsync();
-                await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
+                await _hubContext.Clients.User(user.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
                 //啟動Hangfire CheckAlreadyOverdueRemider
                 RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/2 * * * *");
                 return true;
@@ -85,6 +86,7 @@ namespace GoParkAPI.Services
             var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
             var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
             var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
+            var userId = user.UserId;
             if (reservation.ValidUntil < now && !reservation.IsFinish && reservation.NotificationStatus)
             {
                 reservation.IsFinish = true;
@@ -95,7 +97,7 @@ namespace GoParkAPI.Services
                     user.IsBlack = true;
                 }
                 await _context.SaveChangesAsync();
-                await _hubContext.Clients.All.SendAsync("ReceiveNotification", "預約超時提醒", "你的預約已超時!!");
+                await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", "預約超時提醒", "你的預約已超時!!");
                 return true;
             }
             if (reservation.IsFinish)

@@ -5,6 +5,7 @@ using GoParkAPI.Providers;
 using GoParkAPI.Services;
 using Hangfire;
 using Hangfire.SqlServer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
@@ -78,6 +79,7 @@ builder.Services.AddHangfire(config =>
 // 啟用 Hangfire 服務
 builder.Services.AddHangfireServer();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>(); // 註冊 CustomUserIdProvider
 //// 註冊 ReservationHub
 //builder.Services.AddSingleton<ReservationHub>();
 
