@@ -45,7 +45,7 @@ namespace GoParkAPI.Controllers
                     lotName = res.Lot.LotName,
                     licensePlate = res.Car.LicensePlate,
                     startTime = (DateTime)res.StartTime,
-                    validUntil = res.ValidUntil,  //還在進行中的預定要顯示
+                    validUntil = (DateTime)res.ValidUntil,  //還在進行中的預定要顯示
                     PaymentStatus =res.PaymentStatus,
                     isCanceled = res.IsCanceled,
                     isOverdue = res.IsOverdue, //判斷是否逾時(違規)
@@ -128,7 +128,7 @@ namespace GoParkAPI.Controllers
                 lotName = res.Lot.LotName,
                 licensePlate = res.Car.LicensePlate,
                 startTime = (DateTime)res.StartTime,
-                validUntil = res.ValidUntil,  //還在進行中的預定要顯示
+                validUntil = (DateTime)res.ValidUntil,  //還在進行中的預定要顯示
                 PaymentStatus = res.PaymentStatus,
                 isCanceled = res.IsCanceled,
                 isOverdue = res.IsOverdue, //判斷是否逾時(違規)
@@ -267,6 +267,45 @@ namespace GoParkAPI.Controllers
                 // 捕捉所有異常並返回具體錯誤訊息
                 return StatusCode(500, new { Message = "伺服器內部錯誤", Detail = ex.Message });
             }
+        }
+
+        //------------line bot使用
+
+        //查詢還在進行中的預訂資訊
+        // GET: api/Reservations/CurrentReservations
+        [HttpGet("CurrentReservations")]
+        public async Task<IEnumerable<ReservationDTO>> GetCurrentReservation(int userId)
+        {
+
+            //篩選該用戶車牌的預訂資料(還在進行中的預訂)
+            var reservations = _context.Reservation
+                .Where(res => res.Car.UserId == userId && !res.IsFinish && !res.IsCanceled)
+                .Select(res => new ReservationDTO
+                {
+                    resId = res.ResId,
+                    resTime = (DateTime)res.ResTime,  //預訂時間
+                    lotName = res.Lot.LotName,  //停車場名稱
+                    location = res.Lot.Location,
+                    licensePlate = res.Car.LicensePlate,
+                    startTime = (DateTime)res.StartTime,  //預訂進場時間
+                    validUntil = (DateTime)res.ValidUntil,  //最遲進場時間
+                    PaymentStatus = res.PaymentStatus,
+
+                    //下面三個狀態其實line不需要
+                    isCanceled = res.IsCanceled,
+                    isOverdue = res.IsOverdue, //判斷是否逾時(違規)
+                    isFinish = res.IsFinish,
+                    //-----
+                    latitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Latitude).FirstOrDefault(),
+                    longitude = _context.ParkingLots.Where(lot => lot.LotName == res.Lot.LotName).Select(lot => lot.Longitude).FirstOrDefault(),
+                    lotId = res.Lot.LotId, //為了要導入到預定頁面需要停車場id
+
+                });
+            if (reservations == null)
+            {
+                return null;
+            }
+            return reservations;
         }
 
 
