@@ -6,7 +6,6 @@ namespace GoParkAPI.Services
 {
     public class ReservationHub : Hub
     {
-        private static Dictionary<string, string> UserConnections = new Dictionary<string, string>();
         private readonly PushNotificationService _pushNotificationService;
 
         public ReservationHub(PushNotificationService pushNotificationService)
