@@ -77,7 +77,7 @@ namespace GoParkAPI.Controllers
             return custDTO;
         }
 
-        // PUT: api/Customers/5
+        // PUT: api/Customers/id5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //網址列id 第一個參數
         [HttpPut("id{id}")]
@@ -101,8 +101,6 @@ namespace GoParkAPI.Controllers
             {
                 return "無法找到車輛資料";
             }
-
-
 
 
 
@@ -143,6 +141,43 @@ namespace GoParkAPI.Controllers
             }
 
             return "修改成功";
+        }
+
+        [HttpPut("password{id}")]
+        public async Task<IActionResult> ChangePassword(int id, ChangePswDTO pswDto)
+        {
+            // 根據傳入的 id 找到用戶
+            var customer = await _context.Customer.FindAsync(id);
+            if (customer == null)
+            {
+                return NotFound("用戶不存在");
+            }
+
+
+            // 驗證舊密碼是否正確
+            if (!_hash.VerifyPassword(pswDto.OldPassword, customer.Password, customer.Salt))
+            {
+                return BadRequest("舊密碼不正確");
+            }
+
+            // 使用新的密碼和鹽值覆蓋舊密碼
+            var (newHashedPassword, newSalt) = _hash.HashPassword(pswDto.NewPassword);
+            customer.Password = newHashedPassword;
+            customer.Salt = newSalt;
+
+            // 設置資料庫狀態為已修改
+            _context.Entry(customer).State = EntityState.Modified;
+
+            try
+            {
+                // 儲存更改
+                await _context.SaveChangesAsync();
+                return Ok("密碼更新成功");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return StatusCode(500, "更新失敗，請稍後再試");
+            }
         }
 
 
