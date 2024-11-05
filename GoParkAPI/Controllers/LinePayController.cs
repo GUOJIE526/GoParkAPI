@@ -108,7 +108,7 @@ namespace GoParkAPI.Controllers
         [HttpPost("UpdatePaymentStatus")]
         public async Task<IActionResult> UpdatePaymentStatus([FromBody] UpdatePaymentStatusDTO dto)
         {
-            // 1. 查詢 Customer 資料
+            // 查詢 Customer 資料
             var customer = await _context.MonthlyRental
                 .Where(m => m.TransactionId == dto.OrderId)
                 .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
@@ -120,7 +120,7 @@ namespace GoParkAPI.Controllers
                 return NotFound(new { success = false, message = "找不到對應的使用者。" });
             }
 
-            // 2. 更新支付狀態
+            // 更新支付狀態
             var (success, message) = await _myPayService.UpdatePaymentStatusAsync(dto.OrderId);
 
             if (!success)
@@ -128,13 +128,7 @@ namespace GoParkAPI.Controllers
                 return NotFound(new { success = false, message });
             }
 
-            //// 3. 發送成功通知郵件
-            //string subject = "MyGoParking!";
-            //string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
-            //                        <p>敬祝順利，感謝申請月租！</p>
-            //                        <p>MyGoParking 團隊 敬上</p>";
-
-
+          
             // 準備佔位符的值
             var placeholders = new Dictionary<string, string>
             {
@@ -148,20 +142,17 @@ namespace GoParkAPI.Controllers
             // 讀取模板並替換佔位符
             string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
 
-            // 發送郵件
-            await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
-
-
-            //try
-            //{
-            //    await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
-            //    Console.WriteLine($"成功發送郵件至 {customer.Email}");
-            //}
-            //catch (Exception ex)
-            //{
-            //    // 捕捉並記錄郵件發送錯誤
-            //    Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
-            //}
+            try
+            {
+                // 發送郵件
+                await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
+                Console.WriteLine($"成功發送郵件至 {customer.Email}");
+            }
+            catch (Exception ex)
+            {
+                // 捕捉並記錄郵件發送錯誤
+                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            }
 
             // 4. 返回成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
@@ -290,15 +281,25 @@ namespace GoParkAPI.Controllers
             {
                 return NotFound(new { success = false, message });
             }
-            // 3.發送成功通知郵件
-            string subject = "MyGoParking!";
-            string emailMessage = $@"<p>親愛的 {customer.Username}：</p>
-                                    <p>敬祝順利，感謝預約！</p>
-                                    <p>MyGoParking 團隊 敬上</p>";
+            // 準備佔位符的值
+            var placeholders = new Dictionary<string, string>
+            {
+                { "username", customer.Username},
+                { "message", "您的預約已成功，請在約定的時間抵達，感謝您使用 MyGoParking！" }
+            };
+
+            // 指定模板路徑
+            string templatePath = "Templates/EmailTemplate.html";
+
+            // 讀取模板並替換佔位符
+            string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
+
+            
 
             try
             {
-                await _sentmail.SendEmailAsync(customer.Email, subject, emailMessage); // 發送信件
+                // 發送郵件
+                await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
                 Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
             catch (Exception ex)
