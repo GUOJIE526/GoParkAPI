@@ -264,7 +264,7 @@ namespace GoParkAPI.Services
 
             // 2. 根據 carId 查找 entryExitRecord 並設定 LicensePlateKeyinTime
             var entryExitRecord = await _context.EntryExitManagement
-                .FirstOrDefaultAsync(record => record.CarId == dto.carId);
+                .FirstOrDefaultAsync(record => record.CarId == dto.carId && record.PaymentStatus == false);
 
             if (entryExitRecord == null)
             {
@@ -304,7 +304,7 @@ namespace GoParkAPI.Services
             var finalAmount = originalAmount - discountAmount;
 
             // 如果最終金額小於 0，強制設定為 0
-            if (finalAmount < 0)
+            if (finalAmount <= 0)
             {
                 finalAmount = 0;
             }
@@ -312,6 +312,7 @@ namespace GoParkAPI.Services
             // 7. 驗證傳入的金額是否正確
             if (finalAmount != dto.Amount)
             {
+                Console.WriteLine("檢測的金額為:" + finalAmount);
                 return (false, "金額不正確。");
             }
             Console.WriteLine("檢測的金額為:" + finalAmount);
