@@ -85,7 +85,7 @@ namespace GoParkAPI.Controllers
         {
             try
             {
-                string redisKey = "AllParkingLots";
+                string redisKey = "AllParkingLot";
                 var cacheParkingLots = await _db.StringGetAsync(redisKey);
 
                 var jsonSerialize = new JsonSerializerOptions
