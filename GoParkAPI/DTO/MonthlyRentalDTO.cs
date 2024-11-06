@@ -1,4 +1,4 @@
-﻿namespace GoParkAPI.Controllers
+﻿namespace GoParkAPI.DTO
 {
     public class MonthlyRentalDTO
     {

@@ -22,6 +22,7 @@ namespace GoParkAPI.Controllers
             _context = context;
         }
 
+        //取得用戶車牌資料
         // GET: api/Cars_
         [HttpGet]
         public async Task<IEnumerable<CarsDTO>> GetCars(int userId)
@@ -42,7 +43,7 @@ namespace GoParkAPI.Controllers
             return cars;
         }
 
-
+        //修改車牌使用狀態
         // PUT: api/Cars_/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut()]
@@ -75,17 +76,30 @@ namespace GoParkAPI.Controllers
         // POST: api/Cars_
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<string> PostCar(int userId, List<CarsDTO> carsDto)
+        public async Task<IActionResult> PostCar(int userId, List<CarsDTO> carsDto)
         {
+            
             foreach (var car in carsDto)
             {
+                //驗證車牌是否為空白                
+                if (string.IsNullOrWhiteSpace(car.licensePlate))
+                {
+                    return BadRequest(new { success = false, message = "新增失敗: 車牌不能為空" });
+                }
+
+                // 驗證車牌是否已存在
+                bool carExists = await _context.Car.AnyAsync(c => c.LicensePlate == car.licensePlate);
+                if (carExists)
+                {
+                    return BadRequest(new { success = false, message = $"新增失敗: 車牌 {car.licensePlate} 已存在" });
+                }
+
                 Car newCar = new Car
                 {
                     UserId = userId,
                     LicensePlate = car.licensePlate,
                     RegisterDate = DateTime.Now,
                     IsActive = car.isActive
-
                 };
                 _context.Car.Add(newCar);
             };
@@ -98,27 +112,12 @@ namespace GoParkAPI.Controllers
             }
             catch (DbUpdateException ex)
             {
-                return $"新增失敗: {ex.Message}";
+                return StatusCode(500, new { success = false, message = $"新增失敗: {ex.Message}" });
             }
 
-            return "新增成功";
+            return Ok(new { success = true, message = "新增成功" });
         }
 
-        // DELETE: api/Cars_/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteCar(int id)
-        //{
-        //    var car = await _context.Car.FindAsync(id);
-        //    if (car == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    _context.Car.Remove(car);
-        //    await _context.SaveChangesAsync();
-
-        //    return NoContent();
-        //}
 
         private bool CarExists(int id)
         {
