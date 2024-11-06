@@ -36,6 +36,14 @@ namespace GoParkAPI.Services.Domain
             _logger = logger;
             _httpClient = httpClient;
         }
+        //解決傳送文字過長問題
+        private string GetTruncatedText(EntryExitManagementDTO record)
+        {
+            var text = $"車牌： {record.licensePlate}\n進場 / 離場：{record.entryTime.ToString("HH:mm")}/{record.exitTime?.ToString("HH:mm")}\n停車時間：{record.totalMins}分\n費用：{record.amount}";
+
+            // 如果字數超過 57，截斷並加上省略號
+            return text.Length > 57 ? text.Substring(0, 57) + "..." : text;
+        }
 
         //處理Line平台傳回的 webhook 事件資料。
         public void ReceiveWebhook(WebhookRequestBodyDto requestBody)
@@ -182,6 +190,7 @@ namespace GoParkAPI.Services.Domain
                     else if (actionType == "record_query")
                     {
                         ShowRecordQuickReply(eventDto.ReplyToken);
+                        return;
                     }
                     //查詢特定日期的停車紀錄
                     else if(actionType == "selectDateForRecord")
@@ -190,6 +199,7 @@ namespace GoParkAPI.Services.Domain
                         _logger.LogInformation($"有從postback事件獲取{date}");
 
                         ShowRecordByDate(eventDto.ReplyToken, userId, date);
+                        return;
                     }
                     //月租查詢
                     else if (actionType == "monthly_rent_query")
@@ -211,6 +221,7 @@ namespace GoParkAPI.Services.Domain
 
                     _logger.LogInformation("有觸發導航功能");
                     ShowLocation(eventDto.ReplyToken, latitude, longitude, lotName, address);
+                    return;
                 }
                 else
                 {
@@ -453,6 +464,8 @@ namespace GoParkAPI.Services.Domain
         //顯示特定日期停車紀錄
         public async Task ShowRecordByDate(string replyToken, int userId, string date)
         {
+            
+
             try
             {
                 // Step 1: 獲取特定日期停車紀錄
@@ -483,11 +496,11 @@ namespace GoParkAPI.Services.Domain
 
 
                 // 如果有資料，建立輪播模板消息
-                var carouselColumns = parkingRecords.Select(record => new CarouselColumnObjectDto
+                var carouselColumns = parkingRecords.Take(10).Select(record => new CarouselColumnObjectDto
                 {
-                    ThumbnailImageUrl = "https://i.imgur.com/o1SHCuG.png", // 每個輪播物件的圖片
-                    Title = $"ID: {record.entryexitId} {record.lotName}", 
-                    Text = $"車牌： {record.licensePlate}\n進場時間：{record.entryTime.ToString("yyyy-MM-dd HH:mm")}\n離場時間：{record.exitTime?.ToString("yyyy-MM-dd HH:mm")}\n停車時間：{record.totalMins}分\n費用：{record.amount}",
+                    ThumbnailImageUrl = "https://i.imgur.com/cdj6a0F.png", // 每個輪播物件的圖片
+                    Title = $"#{record.entryexitId} {record.lotName}", 
+                    Text = GetTruncatedText(record),
                     Actions = new List<ActionDto>
                     {   //目前未設定
                         new ActionDto
@@ -499,6 +512,8 @@ namespace GoParkAPI.Services.Domain
 
                     }
                 }).ToList();
+                _logger.LogInformation($"Generated {carouselColumns.Count} carousel items.");
+                
 
                 var replyMessage = new ReplyMessageRequestDto<TemplateMessageDto<CarouselTemplateDto>>
                 {
@@ -515,8 +530,11 @@ namespace GoParkAPI.Services.Domain
                         }
                     }
                 };
+                _logger.LogInformation("Sending reply message...");
+                ReplyMessageHandler(replyMessage); //發送消息
+                _logger.LogInformation("Reply message sent.");
 
-                ReplyMessageHandler(replyMessage); // 發送消息
+
                 return;
             }
             catch (Exception ex)
@@ -567,8 +585,31 @@ namespace GoParkAPI.Services.Domain
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
 
-            var response = await client.SendAsync(requestMessage);
-            Console.WriteLine(await response.Content.ReadAsStringAsync());
+            try
+            {
+                var response = await client.SendAsync(requestMessage);
+
+                // 檢查 HTTP 回應狀態碼
+                if (response.IsSuccessStatusCode)
+                {
+                    // 如果回應成功，輸出成功訊息
+                    _logger.LogInformation("Reply message sent successfully.");
+                    Console.WriteLine(await response.Content.ReadAsStringAsync());
+                }
+                else
+                {
+                    // 如果回應失敗，輸出錯誤訊息
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Error sending message. Status code: {response.StatusCode}. Response: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                // 捕捉並處理任何異常
+                _logger.LogError($"Exception occurred while sending message: {ex.Message}");
+                Console.WriteLine($"Exception: {ex.Message}");
+            }
+
         }
 
 
