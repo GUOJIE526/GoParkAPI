@@ -48,6 +48,7 @@ namespace GoParkAPI.Controllers
                     
                     entryexitId = record.EntryexitId,
                     lotName = record.Lot.LotName,
+                    district = record.Lot.District,
                     licensePlate = record.Car.LicensePlate,
                     entryTime = (DateTime)record.EntryTime,
                     exitTime = record.ExitTime,
@@ -119,85 +120,44 @@ namespace GoParkAPI.Controllers
             }
             return parkingDetail;
 
-            //var record = await _context.EntryExitManagement.FindAsync(id);
-            //if(record != null)
-            //{
-            //    EntryExitManagementDTO parkingDetail = new EntryExitManagementDTO
-            //    {
-            //        entryexitId = record.EntryexitId,
-            //        lotName = record.Lot.LotName,
-            //        district = record.Lot.District,
-            //        location = record.Lot.Location,
-            //        licensePlate = record.Car.LicensePlate,
-            //        entryTime = record.EntryTime,
-            //        exitTime = record.ExitTime,
-            //        //totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
-            //        amount = record.Amount
-            //    };
-            //    return parkingDetail;
-            //}
-            //return null;
-
+           
 
         }
 
-        // PUT: api/EntryExitManagements/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutEntryExitManagement(int id, EntryExitManagement entryExitManagement)
-        //{
-        //    if (id != entryExitManagement.EntryexitId)
-        //    {
-        //        return BadRequest();
-        //    }
+        //------------line bot使用------------
 
-        //    _context.Entry(entryExitManagement).State = EntityState.Modified;
+        //查詢特定日期的停車紀錄
+        // GET: api/EntryExitManagements/RecordByDate
+        [HttpGet("RecordByDate")]
+        public async Task<IEnumerable<EntryExitManagementDTO>> GetRecordByDate(int userId, string dateString)
+        {
+            DateTime date = DateTime.ParseExact(dateString, "yyyy-MM-dd", null); //將字串解析為datetime格式，時間部分為00:00:00
+            DateTime startOfDate = date.Date;
+            DateTime endOfDate = date.Date.AddDays(1).AddTicks(-1);
 
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!EntryExitManagementExists(id))
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
+            //篩選該用戶車牌的預訂資料(還在進行中的預訂)
+            var records = _context.EntryExitManagement
+                .Where(record => record.Car.UserId == userId && record.IsFinish)
+                .Where(record => record.EntryTime >= startOfDate && record.EntryTime <= endOfDate)
+                .Select(record => new EntryExitManagementDTO
+                {
+                    entryexitId = record.EntryexitId,
+                    lotName = record.Lot.LotName,
+                    district = record.Lot.District,
+                    location = record.Lot.Location,
+                    licensePlate = record.Car.LicensePlate,
+                    entryTime = (DateTime)record.EntryTime,
+                    exitTime = record.ExitTime,
+                    totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                    amount = record.Amount
+                });
+            if (records == null)
+            {
+                return null;
+            }
+            return records;
+        }
 
-        //    return NoContent();
-        //}
-
-        // POST: api/EntryExitManagements
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //public async Task<ActionResult<EntryExitManagement>> PostEntryExitManagement(EntryExitManagement entryExitManagement)
-        //{
-        //    _context.EntryExitManagement.Add(entryExitManagement);
-        //    await _context.SaveChangesAsync();
-
-        //    return CreatedAtAction("GetEntryExitManagement", new { id = entryExitManagement.EntryexitId }, entryExitManagement);
-        //}
-
-        // DELETE: api/EntryExitManagements/5
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteEntryExitManagement(int id)
-        //{
-        //    var entryExitManagement = await _context.EntryExitManagement.FindAsync(id);
-        //    if (entryExitManagement == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    _context.EntryExitManagement.Remove(entryExitManagement);
-        //    await _context.SaveChangesAsync();
-
-        //    return NoContent();
-        //}
 
         private bool EntryExitManagementExists(int id)
         {

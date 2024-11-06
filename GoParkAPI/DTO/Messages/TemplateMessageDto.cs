@@ -43,8 +43,8 @@ namespace GoParkAPI.DTO.Messages
         public string Type { get; set; } = TemplateTypeEnum.Carousel;
         public List<CarouselColumnObjectDto> Columns { get; set; }
 
-        public string ImageAspectRatio { get; set; }
-        public string ImageSize { get; set; }
+        public string? ImageAspectRatio { get; set; }
+        public string? ImageSize { get; set; }
     }
     //輪播的每一個區塊(最多10個)
     public class CarouselColumnObjectDto

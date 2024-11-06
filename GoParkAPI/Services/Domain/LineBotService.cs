@@ -123,6 +123,13 @@ namespace GoParkAPI.Services.Domain
                                 new ActionDto
                                 {
                                     Type = ActionTypeEnum.Postback,
+                                    Data = "action=record_query",
+                                    Label = "停車紀錄查詢",
+                                    DisplayText = "停車紀錄查詢"
+                                },
+                                new ActionDto
+                                {
+                                    Type = ActionTypeEnum.Postback,
                                     Data = "action=monthly_rent_query",
                                     Label = "車位月租查詢",
                                     DisplayText = "車位月租查詢"
@@ -158,23 +165,39 @@ namespace GoParkAPI.Services.Domain
                 if (dataPartsEqual.Length > 1)
                 {
                     string actionType = dataPartsEqual[1];
-
+                    //點擊預訂查詢出現的quick reply
                     if (actionType == "booking_query")
-                    {
-                        ShowBookingQueryOptions(eventDto.ReplyToken);
+                    {                        
+                        ShowReservationQuickReply(eventDto.ReplyToken);
                         return;
                     }
-                    else if (actionType == "monthly_rent_query")
-                    {
-                        // ShowMonthlyRentOptions(eventDto.ReplyToken);
-                        return;
-                    }
+                    //當前預訂查詢
                     else if (actionType == "currentReservation")
                     {
                         _logger.LogInformation("有觸發 currentReservation");
                         ShowCurrentReservation(eventDto.ReplyToken, userId);
                         return;
                     }
+                    //點擊停車紀錄查詢的quick reply
+                    else if (actionType == "record_query")
+                    {
+                        ShowRecordQuickReply(eventDto.ReplyToken);
+                    }
+                    //查詢特定日期的停車紀錄
+                    else if(actionType == "selectDateForRecord")
+                    {
+                        string date = eventDto.Postback.Params.Date;
+                        _logger.LogInformation($"有從postback事件獲取{date}");
+
+                        ShowRecordByDate(eventDto.ReplyToken, userId, date);
+                    }
+                    //月租查詢
+                    else if (actionType == "monthly_rent_query")
+                    {
+                        // ShowMonthlyRentOptions(eventDto.ReplyToken);
+                        return;
+                    }
+                    
                 }
 
                 // 使用 '$' 進行分割並檢查 "navigate" 的導航指令
@@ -202,8 +225,59 @@ namespace GoParkAPI.Services.Domain
         }
 
 
-        //當點查詢預訂會出現幾個選項(當前預訂、選擇特定日期、返回選單)
-        private void ShowBookingQueryOptions(string replyToken)
+        //當點預訂查詢會出現的Quick Reply(當前預訂、返回選單)
+        private void ShowReservationQuickReply(string replyToken)
+        {
+            var today = DateTime.Now;
+            var oneYearAgo = today.AddYears(-1);
+
+            // 格式化日期为只包含日期的格式 (yyyy-MM-dd)
+            var max = today.ToString("yyyy-MM-dd");
+            var min = oneYearAgo.ToString("yyyy-MM-dd");
+            var initial = today.ToString("yyyy-MM-dd");
+
+            var replyMessage = new ReplyMessageRequestDto<TextMessageDto>
+            {
+                ReplyToken = replyToken,
+                Messages = new List<TextMessageDto>
+                {
+                    new TextMessageDto
+                    {
+                        Text = "請選擇以下選項：",
+                        QuickReply = new QuickReplyItemDto
+                        {
+                            Items = new List<QuickReplyButtonDto>
+                            {
+                                // postback action:查看當前預訂
+                                new QuickReplyButtonDto {
+                                    Action = new ActionDto {
+                                        Type = ActionTypeEnum.Postback,
+                                        Label = "當前預訂" ,
+                                        Data = "action=currentReservation" ,
+                                        DisplayText = "當前預訂",
+                                    }
+                                },
+                                // message :返回功能選單
+                                new QuickReplyButtonDto
+                                {
+                                    Action = new ActionDto
+                                    {
+                                        Type= ActionTypeEnum.Message,
+                                        Label= "返回功能選單",
+                                        Text ="功能選單"
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            };
+            ReplyMessageHandler(replyMessage);
+        }
+
+        //當點停車紀錄查詢會出現的quick reply(選擇日期、返回選單)
+        private void ShowRecordQuickReply(string replyToken)
         {
             var today = DateTime.Now;
             var oneYearAgo = today.AddYears(-1);
@@ -225,24 +299,13 @@ namespace GoParkAPI.Services.Domain
                         QuickReply = new QuickReplyItemDto
                         {
                             Items = new List<QuickReplyButtonDto>
-                            {
-                                // postback action:查看當前預訂
-                                new QuickReplyButtonDto {
-                                    Action = new ActionDto {
-                                        Type = ActionTypeEnum.Postback,
-                                        Label = "當前預訂" ,
-                                        Data = "action=currentReservation" ,
-                                        DisplayText = "當前預訂。",
-                                        //InputOption = PostbackInputOptionEnum.OpenKeyboard,
-                                        //FillInText = "第一行\n第二行"
-                                    }
-                                },
+                            {                                
                                 // datetime picker action:選擇日期
                                 new QuickReplyButtonDto {
                                     Action = new ActionDto {
-                                    Type = ActionTypeEnum.DatetimePicker,
-                                    Label = "預訂日期選擇",
-                                        Data = "action=selectDateForRes",
+                                        Type = ActionTypeEnum.DatetimePicker,
+                                        Label = "選擇日期",
+                                        Data = "action=selectDateForRecord",
                                         Mode = DatetimePickerModeEnum.Date,
                                         Initial = initial,
                                         Max = max,
@@ -271,7 +334,6 @@ namespace GoParkAPI.Services.Domain
         //顯示預訂資料
         public async Task ShowCurrentReservation(string replyToken, int userId)
         {
-
             try
             {
                 // Step 1: 獲取當前預訂資料
@@ -364,7 +426,7 @@ namespace GoParkAPI.Services.Domain
             }
 
         }
-
+        //點擊特定預訂可以開啟map
         public void ShowLocation(string replyToken, string latitude, string longitude, string lotName, string address)
         {
             double latitudeValue, longitudeValue;
@@ -387,6 +449,95 @@ namespace GoParkAPI.Services.Domain
                 ReplyMessageHandler(message);
             };
         }
+
+        //顯示特定日期停車紀錄
+        public async Task ShowRecordByDate(string replyToken, int userId, string date)
+        {
+            try
+            {
+                // Step 1: 獲取特定日期停車紀錄
+                var response = await _httpClient.GetAsync($"https://localhost:7077/api/EntryExitManagements/RecordByDate?userId={userId}&dateString={date}");
+                response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
+
+                var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
+                _logger.LogInformation(jsonString);
+                var parkingRecords = _jsonProvider.Deserialize<IEnumerable<EntryExitManagementDTO>>(jsonString); // 使用 JsonProvider解析 JSON(反序列化)
+
+                //如果沒有資料(返回訊息:目前沒有進行中預訂)
+                if (parkingRecords == null || !parkingRecords.Any())
+                {
+                    var noResultMessage = new ReplyMessageRequestDto<TextMessageDto>
+                    {
+                        ReplyToken = replyToken,
+                        Messages = new List<TextMessageDto>
+                        {
+                            new TextMessageDto
+                            {
+                                Text = $"{date}沒有停車紀錄"
+                            }
+                        }
+                    };
+                    ReplyMessageHandler(noResultMessage);
+                    return;
+                }
+
+
+                // 如果有資料，建立輪播模板消息
+                var carouselColumns = parkingRecords.Select(record => new CarouselColumnObjectDto
+                {
+                    ThumbnailImageUrl = "https://i.imgur.com/o1SHCuG.png", // 每個輪播物件的圖片
+                    Title = $"ID: {record.entryexitId} {record.lotName}", 
+                    Text = $"車牌： {record.licensePlate}\n進場時間：{record.entryTime.ToString("yyyy-MM-dd HH:mm")}\n離場時間：{record.exitTime?.ToString("yyyy-MM-dd HH:mm")}\n停車時間：{record.totalMins}分\n費用：{record.amount}",
+                    Actions = new List<ActionDto>
+                    {   //目前未設定
+                        new ActionDto
+                        {
+                            Type = ActionTypeEnum.Uri,
+                            Label = "查看詳情",
+                            Uri = $"https://medium.com/appxtech/day-15-%E8%AE%93-c-%E4%B9%9F%E5%8F%AF%E4%BB%A5%E5%BE%88-social-net-6-c-%E8%88%87-line-services-api-%E9%96%8B-flex-message-d149f20a7df6" // 替換為適合的詳情頁面URL
+                        }
+
+                    }
+                }).ToList();
+
+                var replyMessage = new ReplyMessageRequestDto<TemplateMessageDto<CarouselTemplateDto>>
+                {
+                    ReplyToken = replyToken,
+                    Messages = new List<TemplateMessageDto<CarouselTemplateDto>>
+                    {
+                        new TemplateMessageDto<CarouselTemplateDto>
+                        {
+                            AltText = $"查看{date}之停車紀錄",
+                            Template = new CarouselTemplateDto
+                            {
+                                Columns = carouselColumns
+                            }
+                        }
+                    }
+                };
+
+                ReplyMessageHandler(replyMessage); // 發送消息
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "無法獲取停車紀錄資料並發送輪播消息。");
+                //await SendReplyMessage(new
+                //{
+                //    replyToken = replyToken,
+                //    messages = new[]
+                //    {
+                //    new
+                //    {
+                //        type = "text",
+                //        text = "獲取預訂資料時發生錯誤，請稍後再試。"
+                //    }
+                //}
+                //});
+            }
+
+        }
+
 
         //---------以下為傳訊機制(Reply、BroadCast)
 

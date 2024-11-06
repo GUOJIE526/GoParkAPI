@@ -43,6 +43,12 @@
     public class PostbackEventDto
     {
         public string Data { get; set; }
+        public ParamsDto? Params { get; set; }
+    }
+
+    public class ParamsDto
+    {
+        public string? Date { get; set; }
     }
 
     //-------------Message Event 當傳送訊息會有此屬性-----------------
