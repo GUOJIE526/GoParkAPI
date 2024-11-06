@@ -234,7 +234,7 @@ namespace GoParkAPI.Services
         public Reservation ResMapDtoToModel(PaymentRequestDto dto)
         {
             DateTime startTime = (DateTime)dto.StartTime;
-            TimeSpan overTime = TimeSpan.FromMinutes(15);
+            TimeSpan overTime = TimeSpan.FromMinutes(3);
             DateTime vaildTime = startTime.Add(overTime);
             return new Reservation
             {
