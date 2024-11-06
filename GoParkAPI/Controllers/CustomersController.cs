@@ -364,15 +364,8 @@ namespace GoParkAPI.Controllers
                 user.Salt = salt;
                 // 更新用戶的 Token（可選）
                 user.Token = reset.Token;
-                //// 將 token 存入資料庫 (可選，根據需要設計)
-                //var cust = new Customer
-                //{
-                //    UserId = user.UserId,
-                //    Password = user.Password,
-                //    Salt = user.Salt,
-                //    Token = reset.Token,
-                //};
-                _context.Customer.Update(user);//斷在這裡
+              
+                _context.Customer.Update(user);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { message = "密碼已成功重設" });
