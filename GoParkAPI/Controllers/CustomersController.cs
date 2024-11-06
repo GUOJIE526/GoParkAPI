@@ -15,6 +15,11 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection.XmlEncryption;
 using NuGet.Protocol.Plugins;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Configuration;
 
 namespace GoParkAPI.Controllers
 {
@@ -26,15 +31,16 @@ namespace GoParkAPI.Controllers
         private readonly EasyParkContext _context;
         private readonly pwdHash _hash;
         private readonly MailService _sentmail;
-
-
-        public CustomersController(EasyParkContext context, pwdHash hash, MailService sentmail)
+        private readonly IConfiguration _configuration;
+        public CustomersController(EasyParkContext context, pwdHash hash, MailService sentmail, IConfiguration configuration)
         {
             _context = context;
             _hash = hash;
             _sentmail = sentmail;
+            _configuration = configuration;
         }
 
+       
         // GET: api/Customers
         [HttpGet]
         public async Task<IEnumerable<CustomerDTO>> GetCustomer()
@@ -77,7 +83,7 @@ namespace GoParkAPI.Controllers
             return custDTO;
         }
 
-        // PUT: api/Customers/5
+        // PUT: api/Customers/id5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //網址列id 第一個參數
         [HttpPut("id{id}")]
@@ -101,8 +107,6 @@ namespace GoParkAPI.Controllers
             {
                 return "無法找到車輛資料";
             }
-
-
 
 
 
@@ -143,6 +147,43 @@ namespace GoParkAPI.Controllers
             }
 
             return "修改成功";
+        }
+
+        [HttpPut("password{id}")]
+        public async Task<IActionResult> ChangePassword(int id, ChangePswDTO pswDto)
+        {
+            // 根據傳入的 id 找到用戶
+            var customer = await _context.Customer.FindAsync(id);
+            if (customer == null)
+            {
+                return NotFound("用戶不存在");
+            }
+
+
+            // 驗證舊密碼是否正確
+            if (!_hash.VerifyPassword(pswDto.OldPassword, customer.Password, customer.Salt))
+            {
+                return BadRequest("舊密碼不正確");
+            }
+
+            // 使用新的密碼和鹽值覆蓋舊密碼
+            var (newHashedPassword, newSalt) = _hash.HashPassword(pswDto.NewPassword);
+            customer.Password = newHashedPassword;
+            customer.Salt = newSalt;
+
+            // 設置資料庫狀態為已修改
+            _context.Entry(customer).State = EntityState.Modified;
+
+            try
+            {
+                // 儲存更改
+                await _context.SaveChangesAsync();
+                return Ok("密碼更新成功");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return StatusCode(500, "更新失敗，請稍後再試");
+            }
         }
 
 
@@ -239,56 +280,99 @@ namespace GoParkAPI.Controllers
         }
 
 
-        [HttpPost("forget")]
-        public async Task<ActionResult<CustomerDTO>> ForgetPassword(string email, string newPassword)
+        // JWT web token 忘記密碼
+        [HttpPost("forgot")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotDTO forgot)
         {
-            // 檢查 Email 是否存在於系統中
-            var customer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == email);
-            if (customer == null)
+            var user = await _context.Customer.FirstOrDefaultAsync(u => u.Email == forgot.Email);
+            if (user == null)
             {
-                return NotFound("該 Email 不存在");
+                return Ok(new { message = "找不到該用戶" });
             }
 
-            // 生成一個密碼重置 token
-            var token = Guid.NewGuid().ToString(); // 可考慮使用更安全的生成方法
-            customer.Token = token;
+            // 生成 JWT token
+            var secretKey = _configuration["JwtSettings:SecretKey"];
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
-            // 檢查新密碼是否與舊密碼相同
-            if (customer.Password == _hash.HashPassword(newPassword).Item1) // 使用哈希方法
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                return BadRequest("新密碼不能與舊密碼相同");
-            }
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                    new Claim("timestamp", DateTime.UtcNow.ToString()) // 增加時間戳作為 Claim
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),  // Token 有效期
+                SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature),
+                Issuer = _configuration["JwtSettings:Issuer"],  // 設置 Issuer
+                Audience = _configuration["JwtSettings:Audience"]  // 設置 Audience
+            };
 
-            // 將新密碼進行哈希處理並更新
-            var (hashedPassword, salt) = _hash.HashPassword(newPassword);
-            customer.Password = hashedPassword; // 更新哈希後的新密碼
-            customer.Salt = salt; // 更新鹽值
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var resetToken = tokenHandler.WriteToken(token);
 
-            // 設定 token 有效期
-            //customer.TokenExpiration = DateTime.UtcNow.AddHours(1);
+            // 構建密碼重設連結
+            var resetLink = $"http://localhost:5173/reset?token={resetToken}";
 
-            // 儲存 token 到數據庫
-            _context.Customer.Update(customer);
-            await _context.SaveChangesAsync();
+            // 構建返回的 DTO，將 token 也傳回給前端
+            var resetPasswordDto = new ResetDTO
+            {
+                Token = resetToken  // 將 token 傳回
+            };
 
-            // 生成重置密碼的鏈接
-            string resetLink = $"http://localhost:5173/signIn?token={token}&email={email}";
+            string subject = "MyGoParking 忘記密碼";
+            string message = $"<p>親愛的用戶：<br>請點擊以下連結重設您的新密碼：</p>" + $"<a href=\"{resetLink}\">" + "<p>此鏈接將在1小時內過期。<br>mygoParking團隊</p>";
 
-            // 準備郵件的標題和內容
-            string subject = "MyGoParking 密碼重置";
-            string message = $"<p>親愛的用戶：<br>請點擊以下連結確認您的新密碼：</p>" + $"<a href=\"{resetLink}\">確認新密碼: \"{newPassword}\"</a><br>" + "<p>此鏈接將在1小時內過期。<br>mygoParking團隊</p>";
+            // 發送郵件 (這裡應該是使用郵件服務發送連結)
+            await _sentmail.SendForgotEmailAsync(user.Email, subject, message, resetLink);
+
+            return Ok(resetPasswordDto);
+        }
+
+        [HttpPost("reset")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetDTO reset)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var secretKey = _configuration["JwtSettings:SecretKey"];
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
             try
             {
-                // 發送郵件
-                await _sentmail.SendEmailAsync(email, subject, message);
-                return Ok("密碼重置郵件已發送，請檢查您的郵箱。");
+                tokenHandler.ValidateToken(reset.Token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateIssuer = true,  // 啟用 Issuer 驗證
+                    ValidateAudience = true,  // 啟用 Audience 驗證
+                    ValidIssuer = _configuration["JwtSettings:Issuer"],  // 從 appsettings 讀取 Issuer
+                    ValidAudience = _configuration["JwtSettings:Audience"],  // 從 appsettings 讀取 Audience
+                    ValidateLifetime = true,  // 驗證 token 的有效期
+                }, out SecurityToken validatedToken);
+
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                    
+                var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "nameid");//找的到id 133了
+                //var userId = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value;//原本寫法 抓不到
+
+                var userId = userIdClaim.Value;
+                var user = await _context.Customer.FindAsync(int.Parse(userId));
+
+
+                // 加密新密碼
+                var (hashedPassword, salt) = _hash.HashPassword(reset.NewPassword);
+                user.Password = hashedPassword;
+                user.Salt = salt;
+                // 更新用戶的 Token（可選）
+                user.Token = reset.Token;
+              
+                _context.Customer.Update(user);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "密碼已成功重設" });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // 發送郵件失敗的錯誤處理
-                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
-                return StatusCode(500, "發送郵件時發生錯誤");
+                return Ok(new { message = "重設密碼鏈接無效或已過期" });
             }
         }
 
