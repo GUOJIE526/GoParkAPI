@@ -62,22 +62,24 @@ namespace GoParkAPI.Services
             // 根據條件查找第一個符合條件的 Reservation 記錄
             var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
             var user = await _context.Reservation.Where(r => r.ResId == resId).Select(r => r.Car.UserId).FirstOrDefaultAsync();
-
-            if (res.StartTime <= minutesLater && res.StartTime > now && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
-            {
-                res.NotificationStatus = true;
-                await _context.SaveChangesAsync();
-                await _hubContext.Clients.User(user.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
-                //啟動Hangfire CheckAlreadyOverdueRemider
-                RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/1 * * * *");
-                return true;
+            if (res!= null){
+                if (res.StartTime <= minutesLater && res.StartTime > now && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
+                {
+                    res.NotificationStatus = true;
+                    await _context.SaveChangesAsync();
+                    await _hubContext.Clients.User(user.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
+                    //啟動Hangfire CheckAlreadyOverdueRemider
+                    RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/1 * * * *");
+                    return true;
+                }
+                // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
+                if (res.IsFinish || res.NotificationStatus)
+                {
+                    RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
+                    return false;
+                }
             }
-            // 如果沒有符合條件的預約，或者預約已完成或已通知，則刪除排程
-            if (res.IsFinish || res.NotificationStatus)
-            {
-                RecurringJob.RemoveIfExists($"OverdueReminder_{resId}");
-                return false;
-            }
+            
             return false;
         }
         public async Task<bool> CheckAlreadyOverdueRemider(int resId)

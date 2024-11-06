@@ -149,27 +149,31 @@ namespace GoParkAPI.Controllers
         //取消預訂(isCancel和isFinish都要變)
         //PUT: api/Reservations/5
         [HttpPut("{id}")]
-        public async Task<string> PutReservation(int id)
+        public async Task<IActionResult> PutReservation(int id)
         {
             var updateRes = await _context.Reservation.FindAsync(id);
-            if (updateRes == null){
-                return "取消預訂失敗，查無此預訂資料";
+            if (updateRes == null)
+            {
+                return BadRequest(new { Message = "取消預訂失敗，查無此預訂資料" });
             }
             else
             {
                 updateRes.IsCanceled =true;
                 updateRes.IsFinish = true;  //要設為完成，取消會顯示在前端已結案區塊
+                var updateLot = await _context.ParkingLots.FindAsync(updateRes.LotId);
+                updateLot.ValidSpace += 1; //釋放車位 
             };
 
             try
             {
                 await _context.SaveChangesAsync();
-                return "已取消預訂";
+                return Ok(new { Message = "已取消預訂", Success = true });
             }
             catch (DbUpdateConcurrencyException)
             {
-                return "取消預訂失敗";
-            }
+                return Ok(new { Message = "取消預訂失敗", Success = false });
+            };
+            
 
         }
 
