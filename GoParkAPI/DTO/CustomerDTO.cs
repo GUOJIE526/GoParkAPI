@@ -9,6 +9,7 @@
         public string Email { get; set; }
         public string Phone { get; set; }
         public string LicensePlate { get; set; }
+        public bool IsBlack { get; set; }
 
     }
 

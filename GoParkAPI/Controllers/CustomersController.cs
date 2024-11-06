@@ -72,7 +72,8 @@ namespace GoParkAPI.Controllers
                 Salt = customer.Salt,
                 Email = customer.Email,
                 Phone = customer.Phone,
-                LicensePlate = cnum
+                LicensePlate = cnum,
+                IsBlack = customer.IsBlack
             };
 
             if (customer == null)
