@@ -145,8 +145,14 @@ namespace GoParkAPI.Controllers
         }
 
         [HttpGet("CheckMonRentalSpace")]
-        public async Task<IActionResult> CheckMonRentalSpace(int lotId)
+        public async Task<IActionResult> CheckMonRentalSpace(int lotId, int userId)
         {
+            var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == userId);
+            if(user != null && user.IsBlack == true) //黑名單用戶
+            {
+                return Ok(new { Message = "黑名單用戶無法申請月租", Success = false });
+            }
+
             bool isAvailable = await _monRentalService.isMonResntalSpaceAvailableAsync(lotId);
             if (!isAvailable)
             {
@@ -169,6 +175,12 @@ namespace GoParkAPI.Controllers
         {
             try
             {
+                var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == monApplayDTO.UserId);
+                if(user != null && user.IsBlack == true) //黑名單用戶
+                {
+                    return BadRequest(new { Message = "黑名單用戶無法申請月租" });
+                }
+
                 if (monApplayDTO.UserId == null || monApplayDTO.UserId == 0)
                 {
                     return BadRequest(new { Message = "無法取得用戶ID" });

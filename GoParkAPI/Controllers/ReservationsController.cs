@@ -222,6 +222,11 @@ namespace GoParkAPI.Controllers
         {
             try
             {
+                var user = await _context.Customer.FindAsync(userId);
+                if(user != null && user.IsBlack == true)
+                {
+                    return BadRequest(new { Message = "黑名單用戶無法進行預約" });
+                }
 
                 if (userId == null)
                 {
