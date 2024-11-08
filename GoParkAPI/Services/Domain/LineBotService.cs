@@ -26,6 +26,8 @@ namespace GoParkAPI.Services.Domain
         private static HttpClient client = new HttpClient(); // 負責處理HttpRequest
         private readonly JsonProvider _jsonProvider = new JsonProvider();
         private int userId = 8;
+        private int testId = 8;
+
 
 
         private readonly ILogger<LineBotController> _logger;
