@@ -115,10 +115,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 //app.MapHub<ReservationHub>("/reservationHub"); // 設置 SignalR Hub 路徑
+app.UseRouting();
 app.UseCors();
 // 啟用 Hangfire Dashboard
 app.UseHangfireDashboard();
-app.UseRouting();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapHub<ReservationHub>("/reservationHub");
