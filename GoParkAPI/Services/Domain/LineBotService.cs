@@ -26,7 +26,6 @@ namespace GoParkAPI.Services.Domain
         private static HttpClient client = new HttpClient(); // 負責處理HttpRequest
         private readonly JsonProvider _jsonProvider = new JsonProvider();
         private int userId = 8;
-        private int testId = 8;
 
 
 
@@ -184,8 +183,17 @@ namespace GoParkAPI.Services.Domain
                     //當前預訂查詢
                     else if (actionType == "currentReservation")
                     {
-                        _logger.LogInformation("有觸發 currentReservation");
                         ShowCurrentReservation(eventDto.ReplyToken, userId);
+                        return;
+                    }
+                    else if(actionType== "cancelReservationConfirm")
+                    {
+                        CancelReservationConfirm(eventDto.ReplyToken, dataPartsEqual[2]); //後面是傳遞res_id
+                        return;
+                    }
+                    else if (actionType == "cancelReservation")
+                    {
+                        CancelReservation(eventDto.ReplyToken, dataPartsEqual[2]);//繼續傳遞res_id
                         return;
                     }
                     //點擊停車紀錄查詢的quick reply
@@ -382,23 +390,21 @@ namespace GoParkAPI.Services.Domain
                     Title = $"預訂ID: {res.resId} {res.lotName}", // 替換為實際的預訂ID
                     Text = $"車牌： {res.licensePlate}\n預訂進場時間：{res.startTime.ToString("yyyy-MM-dd HH:mm")}\n最遲進場時間：{res.validUntil.ToString("yyyy-MM-dd HH:mm")}",
                     Actions = new List<ActionDto>
-                    {
-                        new ActionDto
-                        {
-                            Type = ActionTypeEnum.Uri,
-                            Label = "查看詳情",
-                            Uri = $"https://medium.com/appxtech/day-15-%E8%AE%93-c-%E4%B9%9F%E5%8F%AF%E4%BB%A5%E5%BE%88-social-net-6-c-%E8%88%87-line-services-api-%E9%96%8B-flex-message-d149f20a7df6" // 替換為適合的詳情頁面URL
-                        },
+                    {                        
                         new ActionDto
                         {
                             Type = ActionTypeEnum.Postback,
                             Label = "導航到停車場",
                             Data = $"navigate${res.latitude}${res.longitude}${res.lotName}${res.location}", // 傳送導航所需的經緯度
                             DisplayText ="導航到停車場"
-                        }
-
-
-
+                        },
+                        new ActionDto
+                        {
+                            Type = ActionTypeEnum.Postback,
+                            Label = "取消預訂",
+                            Data = $"action=cancelReservationConfirm={res.resId}", //進到取消預訂處理，並傳遞預定id做處理
+                            DisplayText ="取消預訂"
+                        },
                     }
                 }).ToList();
 
@@ -424,18 +430,6 @@ namespace GoParkAPI.Services.Domain
             catch (Exception ex)
             {
                 _logger.LogError(ex, "無法獲取當前預訂資料並發送輪播消息。");
-                //await SendReplyMessage(new
-                //{
-                //    replyToken = replyToken,
-                //    messages = new[]
-                //    {
-                //    new
-                //    {
-                //        type = "text",
-                //        text = "獲取預訂資料時發生錯誤，請稍後再試。"
-                //    }
-                //}
-                //});
             }
 
         }
@@ -461,6 +455,81 @@ namespace GoParkAPI.Services.Domain
                 };
                 ReplyMessageHandler(message);
             };
+        }
+
+        //點擊某筆取消預訂，出現是否確認取消? (comfirm template)
+        public void CancelReservationConfirm(string ReplyToken, string resId)
+        {
+            var replyMessage = new ReplyMessageRequestDto<TemplateMessageDto<ConfirmTemplateDto>>
+            {
+                ReplyToken = ReplyToken,
+                Messages = new List<TemplateMessageDto<ConfirmTemplateDto>>
+                {
+                    new TemplateMessageDto<ConfirmTemplateDto>
+                    {
+                        AltText = "是否取消預訂?",
+                        Template = new ConfirmTemplateDto
+                        {
+                            Text="是否取消預訂?",
+                            Actions = new List<ActionDto>
+                            {
+                                new ActionDto
+                                {
+                                    Type = ActionTypeEnum.Postback,
+                                    Label = "確認",
+                                    Data = $"action=cancelReservation={resId}",  //傳遞欲取消預定的id
+                                    DisplayText = "確認取消"
+                                },
+                                new ActionDto   //導回當前預訂頁面
+                                {
+                                    Type = ActionTypeEnum.Postback,
+                                    Label = "取消",
+                                    Data = "action=currentReservation",
+                                    DisplayText ="取消"
+                                }
+
+                            }
+                        }
+                    }
+                }
+            };
+
+            ReplyMessageHandler(replyMessage); // 發送消息
+        }
+
+        //取消預定
+        public async Task CancelReservation(string ReplyToken, string resId)
+        {
+            try
+            {
+                // Step 1: 獲取要取消的預訂資料
+                int reservationId = int.Parse(resId);  // 將字串轉換為整數型態(api接收整數型態)
+                var response = await _httpClient.PutAsync($"https://localhost:7077/api/Reservations/{reservationId}", null);
+                response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
+
+                var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
+                var result = _jsonProvider.Deserialize<ResponseDto>(jsonString); // 使用 JsonProvider解析 JSON(反序列化)
+                _logger.LogInformation("成功取消預訂");
+                //如果沒有資料(返回訊息: 目前沒有進行中預訂)
+
+                var successMessage = new ReplyMessageRequestDto<TextMessageDto>
+                {
+                    ReplyToken = ReplyToken,
+                    Messages = new List<TextMessageDto>
+                    {
+                        new TextMessageDto
+                        {
+                            Text = $"{result.Message}"
+                        }
+                    }
+                };
+                ReplyMessageHandler(successMessage);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "無法取消預定。");
+            }
         }
 
         //顯示特定日期停車紀錄
