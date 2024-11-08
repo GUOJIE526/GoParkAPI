@@ -445,13 +445,13 @@ namespace GoParkAPI.Controllers
                     _context.Coupon.Add(coup);//加進資料庫 
                 }
                 await _context.SaveChangesAsync();//存檔 
-                return Ok(new { message = "成功領取三張優惠券!" });
+                return Ok(new { message = "成功領取三張優惠券!", success = true });
             }
             else if(userId == null)
             {
-                return Ok(new { message = "領取失敗,您尚未註冊或登入"});
+                return Ok(new { message = "領取失敗,您尚未註冊或登入", success = false});
             }
-            return Ok(new { message = "領取失敗, 請洽客服人員" });
+            return Ok(new { message = "領取失敗, 請洽客服人員", success = false });
         }
 
 
