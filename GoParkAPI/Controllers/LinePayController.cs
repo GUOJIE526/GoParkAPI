@@ -78,7 +78,7 @@ namespace GoParkAPI.Controllers
                     .ToListAsync();
 
                 // 將 DTO 映射為 MonthlyRental 模型
-                MonthlyRental rentalRecord = _myPayService.MapDtoToModel(dto, existingRentals);
+                MonthlyRental rentalRecord = _myPayService.MapDtoToModel(dto);
 
                 // 將租賃記錄新增到資料庫
                 await _context.MonthlyRental.AddAsync(rentalRecord);
@@ -128,7 +128,7 @@ namespace GoParkAPI.Controllers
                 return NotFound(new { success = false, message });
             }
 
-          
+
             // 準備佔位符的值
             var placeholders = new Dictionary<string, string>
             {
@@ -294,7 +294,7 @@ namespace GoParkAPI.Controllers
             // 讀取模板並替換佔位符
             string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
 
-            
+
 
             try
             {
@@ -425,4 +425,5 @@ namespace GoParkAPI.Controllers
 
 
     }
+
 }

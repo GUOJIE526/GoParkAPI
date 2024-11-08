@@ -20,7 +20,7 @@ namespace GoParkAPI.Services
         }
         //--------------------- 月租方案開始 ------------------------
 
-        public MonthlyRental MapDtoToModel(PaymentRequestDto dto,List<MonthlyRental> existingRentals)
+        public MonthlyRental MapDtoToModel(PaymentRequestDto dto)
         {
             // 根據方案 ID 動態設置結束日期
             int rentalMonths = dto.PlanId switch
@@ -31,28 +31,21 @@ namespace GoParkAPI.Services
                 "twelveMonths" => 12,
                 _ => throw new ArgumentException("Invalid PlanId")
             };
-            // 尋找該 CarId 且 PaymentStatus = true 的最後一筆訂單
-            var lastPaidRental = existingRentals
-                .Where(r => r.CarId == dto.CarId && r.PaymentStatus)
-                .OrderByDescending(r => r.EndDate)
-                .FirstOrDefault();
 
-            // 如果找到有效訂單，且 EndDate 大於今天，才使用該日期；否則使用今天
-            DateTime startDate = (lastPaidRental?.EndDate ?? DateTime.Today) > DateTime.Today
-                ? lastPaidRental.EndDate.Value
-                : DateTime.Today;
+            // 確保 StartTime 有值，如果為 null 則預設為今天
+            DateTime startTime = dto.StartTime ?? DateTime.Today;
 
+            // 將 EndDate 設置為 StartTime 加上租賃月數
             return new MonthlyRental
             {
                 CarId = dto.CarId,
                 LotId = dto.LotId,
-                StartDate = dto.StartTime,
-                EndDate = startDate.AddMonths(rentalMonths),
+                StartDate = startTime,
+                EndDate = startTime.AddMonths(rentalMonths),
                 Amount = dto.Amount,
                 PaymentStatus = false,
                 TransactionId = dto.OrderId
             };
-
         }
         //--------------------- 月租方案結束 ------------------------
 
@@ -124,7 +117,6 @@ namespace GoParkAPI.Services
             {
                 rentalRecord.PaymentStatus = true;
                 parkLot.MonRentalSpace -= 1;
-                //parkLot.ValidSpace -= 1;
 
                 var dealRecord = new DealRecord
                 {

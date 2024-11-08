@@ -53,6 +53,7 @@ builder.Services.AddSingleton<JsonProvider>();
 // 註冊 LinePayService 並使用 IHttpClientFactory
 builder.Services.AddHttpClient<LinePayService>();
 builder.Services.AddScoped<MyPayService>();
+builder.Services.AddScoped<ECService>();
 //builder.Services.AddScoped<ECService>();
 
 //----------------------------------------
