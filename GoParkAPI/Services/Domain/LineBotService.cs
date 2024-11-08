@@ -25,7 +25,9 @@ namespace GoParkAPI.Services.Domain
         private readonly string broadcastMessageUri = "https://api.line.me/v2/bot/message/broadcast";
         private static HttpClient client = new HttpClient(); // 負責處理HttpRequest
         private readonly JsonProvider _jsonProvider = new JsonProvider();
-        private int userId = 1;
+        private int userId = 8;
+        private int testId = 8;
+
 
 
         private readonly ILogger<LineBotController> _logger;
