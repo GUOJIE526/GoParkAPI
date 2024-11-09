@@ -56,8 +56,10 @@ namespace GoParkAPI.Services
 
         public async Task<bool> CheckAndSendOverdueReminder(int resId)
         {
-            var now = DateTime.Now;
-            var minutesLater = now.AddMinutes(30);
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+            //var now = DateTime.Now;
+            var minutesLater = taiwanTime.AddMinutes(30);
 
             // 根據條件查找第一個符合條件的 Reservation 記錄
             var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
@@ -65,7 +67,7 @@ namespace GoParkAPI.Services
 
             if (res != null)
             {
-                if (res.StartTime <= minutesLater && res.StartTime > now && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
+                if (res.StartTime <= minutesLater && res.StartTime > taiwanTime && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
                 {
                     res.NotificationStatus = true;
                     await _context.SaveChangesAsync();
@@ -85,14 +87,16 @@ namespace GoParkAPI.Services
         }
         public async Task<bool> CheckAlreadyOverdueRemider(int resId)
         {
-            var now = DateTime.Now;
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+            //var now = DateTime.Now;
             var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
             var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
             var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
             var userId = user.UserId;
             if (reservation != null)
             {
-                if (reservation.ValidUntil < now && !reservation.IsFinish && reservation.NotificationStatus)
+                if (reservation.ValidUntil < taiwanTime && !reservation.IsFinish && reservation.NotificationStatus)
                 {
                     reservation.IsFinish = true;
                     reservation.IsOverdue = true;

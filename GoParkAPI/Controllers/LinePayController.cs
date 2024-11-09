@@ -224,23 +224,6 @@ namespace GoParkAPI.Controllers
                 // 保存變更
                 await _context.SaveChangesAsync();
 
-                //--------------------------------HangFire付款後啟動---------------------------------
-                var user = await _context.Car.Where(c => c.CarId == dto.CarId).Select(c => c.UserId).FirstOrDefaultAsync();
-                if (user == null)
-                {
-                    return BadRequest("找不到對應的用戶");
-                }
-                // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
-                var latestRes = await _context.Reservation
-                    .Where(r => r.CarId == dto.CarId)
-                    .OrderByDescending(r => r.ResId)
-                    .Select(r => r.ResId)
-                    .FirstOrDefaultAsync();
-                //啟動Hangfire CheckAndSendOverdueReminder
-                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
-                //--------------------------------HangFire付款後啟動---------------------------------
-
-
                 // 回傳支付結果
                 return Ok(paymentResponse);
             }
@@ -294,12 +277,22 @@ namespace GoParkAPI.Controllers
             // 讀取模板並替換佔位符
             string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
 
-
-
             try
             {
                 // 發送郵件
                 await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
+
+                //--------------------------------HangFire付款確認後啟動---------------------------------
+                // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
+                var latestRes = await _context.Reservation
+                    .Where(r => r.TransactionId == dto.OrderId)
+                    .OrderByDescending(r => r.ResId)
+                    .Select(r => r.ResId)
+                    .FirstOrDefaultAsync();
+                //啟動Hangfire CheckAndSendOverdueReminder
+                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
+                //--------------------------------HangFire付款確認後啟動---------------------------------
+
                 Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
             catch (Exception ex)
