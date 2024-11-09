@@ -51,7 +51,7 @@ namespace GoParkAPI.Controllers
                 { "TotalAmount", $"{dto.TotalAmount}" },
                 { "TradeDesc", dto.ItemName },
                 { "ItemName", $"{lot.LotName}({dto.ItemName}) - {dto.PlanName}" },
-                { "ReturnURL", "https://0ccf-114-47-71-1.ngrok-free.app/api/ECPay/Callback" },
+                { "ReturnURL", "https://0d16-114-47-71-1.ngrok-free.app/api/ECPay/Callback" },
                 { "ClientBackURL", $"{dto.ClientBackURL}?MerchantTradeNo={merchantTradeNo}" },
                 { "ChoosePayment", "ALL" }
             };
