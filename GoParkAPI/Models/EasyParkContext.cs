@@ -6,10 +6,6 @@ namespace GoParkAPI.Models;
 
 public partial class EasyParkContext : DbContext
 {
-    public EasyParkContext()
-    {
-    }
-
     public EasyParkContext(DbContextOptions<EasyParkContext> options)
         : base(options)
     {
@@ -24,6 +20,8 @@ public partial class EasyParkContext : DbContext
     public virtual DbSet<DealRecord> DealRecord { get; set; }
 
     public virtual DbSet<EntryExitManagement> EntryExitManagement { get; set; }
+
+    public virtual DbSet<LineBinding> LineBinding { get; set; }
 
     public virtual DbSet<MonApplyList> MonApplyList { get; set; }
 
@@ -44,11 +42,12 @@ public partial class EasyParkContext : DbContext
     public virtual DbSet<Survey> Survey { get; set; }
 
     public virtual DbSet<Transactions> Transactions { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Car>(entity =>
         {
-            entity.HasKey(e => e.CarId).HasName("PK__Car__4C9A0DB3C9BE50E7");
+            entity.HasKey(e => e.CarId).HasName("PK__Car__4C9A0DB3B89669E4");
 
             entity.Property(e => e.CarId).HasColumnName("car_id");
             entity.Property(e => e.IsActive)
@@ -70,7 +69,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Coupon>(entity =>
         {
-            entity.HasKey(e => e.CouponId).HasName("PK__Coupon__58CF6389B3B13F35");
+            entity.HasKey(e => e.CouponId).HasName("PK__Coupon__58CF638973D567C5");
 
             entity.Property(e => e.CouponId).HasColumnName("coupon_id");
             entity.Property(e => e.CouponCode)
@@ -94,7 +93,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F0C3A6D09");
+            entity.HasKey(e => e.UserId).HasName("PK__Customer__B9BE370F3C27BA79");
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.BlackCount).HasColumnName("blackCount");
@@ -119,7 +118,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<DealRecord>(entity =>
         {
-            entity.HasKey(e => e.DealId).HasName("PK__DealReco__C012A76CEF414B9A");
+            entity.HasKey(e => e.DealId).HasName("PK__DealReco__C012A76C61B90233");
 
             entity.Property(e => e.DealId).HasColumnName("deal_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
@@ -176,6 +175,26 @@ public partial class EasyParkContext : DbContext
                 .HasForeignKey(d => d.LotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_EntryExit_Lot");
+        });
+
+        modelBuilder.Entity<LineBinding>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__LineBind__3213E83F9480728F");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.LineUserId)
+                .HasMaxLength(50)
+                .HasColumnName("lineUser_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.LineBinding)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LineBinding_Customer");
         });
 
         modelBuilder.Entity<MonApplyList>(entity =>
@@ -258,7 +277,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<ParkingLotImages>(entity =>
         {
-            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC9551A02B4EF");
+            entity.HasKey(e => e.ImageId).HasName("PK__ParkingL__DC9AC95519109FF6");
 
             entity.Property(e => e.ImageId).HasColumnName("image_id");
             entity.Property(e => e.ImgPath).HasColumnName("imgPath");
@@ -314,7 +333,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<ParkingSlot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__ParkingS__971A01BB80C91485");
+            entity.HasKey(e => e.SlotId).HasName("PK__ParkingS__971A01BBEBB9D329");
 
             entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.IsRented).HasColumnName("is_Rented");
@@ -363,7 +382,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Revenue>(entity =>
         {
-            entity.HasKey(e => e.RevenueId).HasName("PK__Revenue__3DF902E9F4C5372A");
+            entity.HasKey(e => e.RevenueId).HasName("PK__Revenue__3DF902E9FB88130F");
 
             entity.Property(e => e.RevenueId).HasColumnName("revenue_id");
             entity.Property(e => e.CreatedTime)
@@ -378,7 +397,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Survey>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Survey__3213E83FD161EDA5");
+            entity.HasKey(e => e.Id).HasName("PK__Survey__3213E83F2D4D8D35");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.IsReplied).HasColumnName("is_replied");
@@ -404,7 +423,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<Transactions>(entity =>
         {
-            entity.HasKey(e => e.TranId).HasName("PK__Transact__A67F8A209D223FF6");
+            entity.HasKey(e => e.TranId).HasName("PK__Transact__A67F8A209B5A58A1");
 
             entity.Property(e => e.TranId).HasColumnName("tran_id");
             entity.Property(e => e.CouponId).HasColumnName("coupon_id");
