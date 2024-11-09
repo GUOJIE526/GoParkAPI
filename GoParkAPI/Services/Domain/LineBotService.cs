@@ -10,11 +10,16 @@ using static GoParkAPI.DTO.Messages.BaseMessageDto;
 using static GoParkAPI.Enum.MessageEnum;
 using System.Net.Http.Headers;
 using System.Text;
+using Microsoft.EntityFrameworkCore.Storage.Json;
+using static System.Net.WebRequestMethods;
+using GoParkAPI.Models;
 
 namespace GoParkAPI.Services.Domain
 {
     public class LineBotService
     {
+
+        
         //messaging api channel 中的 accessToken & secret
         private readonly string channelAccessToken = "ryqtZiA6xa3TwMai/8Xqrgd7u8BRaPuw2fa/XhjG3Ij+contVfz60Uv8yuBXt4XTALlsRe2JUcTluWuSQlOhXkqvmWG27IoO8zsmdtSDa7iPOeKhh+hG5aS1Vcy5DFqQT4uaziHnsQHL8wiAoKbZ5wdB04t89/1O/w1cDnyilFU=";
         private readonly string channelSecret = "50d7c5c553b96a588eb086a7215d898d";
@@ -25,17 +30,18 @@ namespace GoParkAPI.Services.Domain
         private readonly string broadcastMessageUri = "https://api.line.me/v2/bot/message/broadcast";
         private static HttpClient client = new HttpClient(); // 負責處理HttpRequest
         private readonly JsonProvider _jsonProvider = new JsonProvider();
-        private int userId = 8;
+        private int userId = 0;  //預設userId
 
 
-
+        private readonly EasyParkContext _context;
         private readonly ILogger<LineBotController> _logger;
         private readonly HttpClient _httpClient;
 
-        public LineBotService(ILogger<LineBotController> logger, HttpClient httpClient)
+        public LineBotService(ILogger<LineBotController> logger, HttpClient httpClient, EasyParkContext context)
         {
             _logger = logger;
             _httpClient = httpClient;
+            _context = context;
         }
         //解決傳送文字過長問題
         private string GetTruncatedText(EntryExitManagementDTO record)
@@ -46,6 +52,20 @@ namespace GoParkAPI.Services.Domain
             return text.Length > 57 ? text.Substring(0, 57) + "..." : text;
         }
 
+        //依照接收到的lineUserID 去設定查詢資料的ID
+        private bool setUserId(string lineUserId)
+        {
+            var user = _context.LineBinding
+                .Where(b => b.LineUserId == lineUserId)
+                .FirstOrDefault();
+            if (user != null)
+            {
+                userId = user.UserId;
+                return true;
+            }
+            return false;
+        }
+
         //處理Line平台傳回的 webhook 事件資料。
         public void ReceiveWebhook(WebhookRequestBodyDto requestBody)
         {
@@ -53,21 +73,30 @@ namespace GoParkAPI.Services.Domain
             {
                 switch (eventObject.Type)
                 {
+                    //當收到使用者訊息
                     case WebhookEventTypeEnum.Message:
                         _logger.LogInformation("收到使用者傳送訊息");
                         //如果是發送訊息-------
-                        if (eventObject.Message.Type == MessageTypeEnum.Text)
+                        if (setUserId(eventObject.Source.UserId))  //如果有綁定
                         {
-                            HandleTextMessage(eventObject);   //★處理文字訊息(當用戶輸入指令)
-                            //ReceiveMessageWebhookEvent(eventObject);
+                            if (eventObject.Message.Type == MessageTypeEnum.Text)
+                            {
+                                HandleTextMessage(eventObject);   //★處理文字訊息(當用戶輸入指令)                                                                  
+                            }
                         }
+                        else //如果沒綁定
+                        {
+                            _logger.LogInformation("該用戶未綁定");
+                        }                      
                         break;
-                    //這個先暫時不需要
+                    //這個暫時不需要
                     case WebhookEventTypeEnum.Unsend:
                         Console.WriteLine($"使用者{eventObject.Source.UserId}在聊天室收回訊息");
                         break;
                     case WebhookEventTypeEnum.Follow:
-                        Console.WriteLine($"使用者{eventObject.Source.UserId}將我們新增為好友");
+                        _logger.LogInformation($"使用者{eventObject.Source.UserId}將我們新增為好友");
+                        //顯示資訊邀請用戶綁定會員
+                        HandleFollowEvent(eventObject.ReplyToken, eventObject.Source.UserId);
                         break;
                     //這個暫時不需要
                     case WebhookEventTypeEnum.UnFollow:
@@ -83,11 +112,51 @@ namespace GoParkAPI.Services.Domain
                         break;
                     // ★當用戶選擇選單的某項目會返回此事件資料(假如action type為postback)
                     case WebhookEventTypeEnum.Postback:
-                        HandlePostback(eventObject);
-                        _logger.LogInformation("測試導航功能");
+                        if (setUserId(eventObject.Source.UserId)) //如果有綁定
+                        {
+                            HandlePostback(eventObject);
+                            _logger.LogInformation("測試導航功能");
+                        }
+                        else //如果未綁定
+                        {
+                            _logger.LogInformation("該用戶未綁定");
+                        }
+                            
                         break;
                 }
             }
+        }
+
+
+        //當用戶加入官方帳號好友(解除封鎖亦同)-觸發follow事件
+        private void HandleFollowEvent(string replyToken,string lineUserId)
+        {
+            var replyMessage = new ReplyMessageRequestDto<TemplateMessageDto<ButtonsTemplateDto>>
+            {
+                ReplyToken = replyToken,
+                Messages = new List<TemplateMessageDto<ButtonsTemplateDto>>
+                {
+                    new TemplateMessageDto<ButtonsTemplateDto>
+                    {
+                        AltText ="進行會員綁定以使用我們的服務",
+                        Template = new ButtonsTemplateDto
+                        {
+                            Text = "完成Line綁定以使用我們的服務!",
+                            Actions = new List<ActionDto>
+                            {
+                                new ActionDto
+                                {
+                                    Type = ActionTypeEnum.Uri,
+                                    Label = "點擊綁定",
+                                    //將用戶的lineUserId傳遞給後端  (uri是由5173 轉換的)
+                                    Uri = $"https://0a38-36-238-152-236.ngrok-free.app/signIn?line_user_id={lineUserId}"
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            ReplyMessageHandler(replyMessage);
         }
 
         //當用戶輸入訊息符合特定關鍵字
