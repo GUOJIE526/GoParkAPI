@@ -95,8 +95,8 @@ namespace GoParkAPI.Controllers
             if (callbackData == null || string.IsNullOrEmpty(callbackData.MerchantTradeNo))
                 return BadRequest("無效的回傳資料");
 
-   
-            
+
+
             // 查詢 Customer 資料
             var customer = await _context.MonthlyRental
                 .Where(m => m.TransactionId == callbackData.MerchantTradeNo)
@@ -129,7 +129,7 @@ namespace GoParkAPI.Controllers
                     { "username", customer.Username},
                     { "message", "您的月租已確認，感謝您使用 MyGoParking！" }
                 };
-    
+
                 // 指定模板路徑
                 string templatePath = "Templates/EmailTemplate.html";
 
@@ -228,7 +228,7 @@ namespace GoParkAPI.Controllers
 
             return Ok(paymentParameters);
         }
-
+        //-------------------------------------預約回傳------------------------------------------------
         [HttpPost("ResCallback")]
         public async Task<IActionResult> ResCallback([FromForm] ECpayCallbackDTO callbackData)
         {
@@ -297,6 +297,149 @@ namespace GoParkAPI.Controllers
             return Ok("回傳資料處理完成");
         }
 
+        //---------------------------繳費---------------------------------------------------------
+        // 创建静态字典缓存 MerchantTradeNo 和 EntryexitId 的映射
+        private static readonly Dictionary<string, int> _merchantTradeNoCache = new Dictionary<string, int>();
+
+        [HttpPost("ChargeCreate")]
+        public async Task<IActionResult> ChargeCreate([FromBody] ECpayDTO dto)
+        {
+            // 根据 CarId 和 LotId 查找现有的进出记录
+            var existingRecord = await _context.EntryExitManagement
+                    .FirstOrDefaultAsync(e => e.CarId == dto.CarId && e.LotId == dto.LotId);
+
+            if (existingRecord == null)
+            {
+                return BadRequest(new { success = false, message = "未找到該車輛的進出記錄。" });
+            }
+
+            // 查找 LotName
+            var ParkName = await _context.ParkingLots.FirstOrDefaultAsync(l => l.LotId == dto.LotId);
+            var merchantTradeNo = "MyGo" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            dto.OrderId = merchantTradeNo;
+
+            // 存储 MerchantTradeNo 和 EntryexitId 的映射到缓存中
+            _merchantTradeNoCache[merchantTradeNo] = existingRecord.EntryexitId;
+
+            // 构建支付参数
+            var paymentParameters = new Dictionary<string, string>
+            {
+                { "MerchantID", "3002607" },
+                { "MerchantTradeNo", merchantTradeNo },
+                { "MerchantTradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
+                { "PaymentType", "aio" },
+                { "TotalAmount", $"{dto.TotalAmount}" },
+                { "TradeDesc", dto.ItemName },
+                { "ItemName", $"{ParkName.LotName}-{dto.ItemName}" },
+                { "ReturnURL",  $"{_ngrokBaseUrl}/api/ECPay/ChargeCallback" },
+                { "ClientBackURL", $"{dto.ClientBackURL}?MerchantTradeNo={merchantTradeNo}" },
+                { "ChoosePayment", "ALL" }
+             };
+
+            // 生成检核码并添加到参数
+            string checkMacValue = GenerateCheckMacValue(paymentParameters);
+            paymentParameters.Add("CheckMacValue", checkMacValue);
+
+            // 更新现有记录的出场时间和支付金额
+            existingRecord.LicensePlateKeyinTime = DateTime.Now;
+            existingRecord.Amount = dto.TotalAmount;
+            _context.EntryExitManagement.Update(existingRecord);
+            await _context.SaveChangesAsync();
+
+            return Ok(paymentParameters);
+        }
+
+        // 回调方法中比对 MerchantTradeNo
+        [HttpPost("ChargeCallback")]
+        public async Task<IActionResult> ChargeCallback([FromForm] ECpayCallbackDTO callbackData)
+        {
+            if (callbackData == null || string.IsNullOrEmpty(callbackData.MerchantTradeNo))
+                return BadRequest("無效的回傳資料");
+
+            if (_merchantTradeNoCache.TryGetValue(callbackData.MerchantTradeNo, out int entryexitId))
+            {
+                // 根据 entryexitId 查找 EntryExitManagement 记录
+                var entryExitRecord = await _context.EntryExitManagement
+                    .FirstOrDefaultAsync(e => e.EntryexitId == entryexitId);
+
+                if (entryExitRecord == null)
+                    return NotFound("找不到對應的出入紀錄");
+
+                // 如果交易成功，直接更新 PaymentStatus 为 true
+                if (callbackData.RtnCode == "1") // 1 代表交易成功
+                {
+                    entryExitRecord.PaymentStatus = true;
+                    // 将当前时间转换为台北时间
+                    var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                    entryExitRecord.PaymentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
+
+                    // 处理完成后，从缓存中移除该交易记录
+                    _merchantTradeNoCache.Remove(callbackData.MerchantTradeNo);
+                }
+            }
+            else
+            {
+                return NotFound("找不到對應的交易映射");
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok("回傳資料處理完成");
+        }
+
+        //-------------------------------------------------------------------------------------------------------
+
+        [HttpPost("ConfirmPayment")]
+        public async Task<IActionResult> ConfirmPayment(UpdateEntryExitPaymenDTO dto)
+        {
+            // 檢查是否有相同的 CarId 和 Amount 且在 1 分鐘內的交易
+            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
+            var oneMinuteAgo = currentTime.AddMinutes(-1);
+
+            var existingRecord = await _context.DealRecord
+                .AnyAsync(record => record.CarId == dto.MycarId &&
+                                    record.Amount == dto.Myamount &&
+                                    record.PaymentTime >= oneMinuteAgo &&
+                                    record.PaymentTime <= currentTime &&
+                                    record.ParkType == "EntryExit");
+
+            // 若存在相同的交易記錄，則直接返回
+            if (existingRecord)
+            {
+                return BadRequest("重複的交易記錄，操作已取消。");
+            }
+
+            // 若使用了優惠券，更新優惠券狀態
+            if (dto.MycouponId.HasValue)
+            {
+                var coupon = await _context.Coupon
+                    .FirstOrDefaultAsync(c => c.CouponId == dto.MycouponId.Value);
+
+                if (coupon != null)
+                {
+                    coupon.IsUsed = true;
+                }
+            }
+
+            // 新增交易記錄到 DealRecord
+            var newDealRecord = new DealRecord
+            {
+                CarId = dto.MycarId,
+                Amount = dto.Myamount,
+                PaymentTime = currentTime,
+                ParkType = "EntryExit"
+            };
+            await _context.DealRecord.AddAsync(newDealRecord);
+
+            // 保存變更到資料庫
+            await _context.SaveChangesAsync();
+
+            return Ok("付款確認完成，交易已記錄。");
+        }
+
     }
 
 }
+
+

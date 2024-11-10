@@ -117,12 +117,13 @@ namespace GoParkAPI.Services
             {
                 rentalRecord.PaymentStatus = true;
                 parkLot.MonRentalSpace -= 1;
-
+                var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
                 var dealRecord = new DealRecord
                 {
                     CarId = rentalRecord.CarId,
                     Amount = rentalRecord.Amount,
-                    PaymentTime = DateTime.Now,
+                    PaymentTime = currentTime,
                     ParkType = "monthlyRental"
                 };
 
@@ -194,14 +195,16 @@ namespace GoParkAPI.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
                 rentalRecord.PaymentStatus = true;
                 parkLot.ValidSpace -= 1;
 
                 var dealRecord = new DealRecord
                 {
                     CarId = rentalRecord.CarId,
-                    Amount = 3000,
-                    PaymentTime = DateTime.Now,
+                    Amount = parkLot.ResDeposit,
+                    PaymentTime = currentTime,
                     ParkType = "margin"
                 };
 
@@ -228,11 +231,13 @@ namespace GoParkAPI.Services
             DateTime startTime = (DateTime)dto.StartTime;
             TimeSpan overTime = TimeSpan.FromMinutes(3);
             DateTime vaildTime = startTime.Add(overTime);
+            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
             return new Reservation
             {
                 CarId = dto.CarId,
                 LotId = dto.LotId,
-                ResTime=DateTime.Now,
+                ResTime= currentTime,
                 ValidUntil = vaildTime,
                 StartTime = dto.StartTime,
                 PaymentStatus = false,
@@ -263,8 +268,10 @@ namespace GoParkAPI.Services
                 return (false, "未找到該車輛的進出記錄。");
             }
 
+            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
             // 設定 LicensePlateKeyinTime 為目前時間
-            entryExitRecord.LicensePlateKeyinTime = DateTime.Now;
+            entryExitRecord.LicensePlateKeyinTime = currentTime;
 
             // 3. 計算停留時間（小時）
             TimeSpan? duration = entryExitRecord.LicensePlateKeyinTime - entryExitRecord.EntryTime;
@@ -317,10 +324,12 @@ namespace GoParkAPI.Services
 
         public EntryExitManagement EntryExitDtoToModel(PaymentRequestDto dto)
         {
+            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
             return new EntryExitManagement
             {
                 Amount = dto.Amount,
-                LicensePlateKeyinTime=DateTime.Now
+                LicensePlateKeyinTime= currentTime
             };
 
         }
@@ -340,9 +349,11 @@ namespace GoParkAPI.Services
             {
                 return false; // 找不到紀錄
             }
+            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
 
             // 2. 更新該紀錄的支付資訊
-            entryExitRecord.PaymentTime = DateTime.Now;
+            entryExitRecord.PaymentTime = currentTime;
             entryExitRecord.PaymentStatus = true;
             entryExitRecord.ValidTime = entryExitRecord.PaymentTime?.AddMinutes(15);
 
@@ -357,13 +368,12 @@ namespace GoParkAPI.Services
                     coupon.IsUsed = true;
                 }
             }
-
             // 4. 在 DealRecord 中新增一筆交易記錄
             var newDealRecord = new DealRecord
             {
                 CarId = dto.MycarId,
                 Amount = dto.Myamount,
-                PaymentTime = DateTime.Now,
+                PaymentTime = currentTime,
                 ParkType = "EntryExit"
             };
             await _context.DealRecord.AddAsync(newDealRecord);
@@ -405,8 +415,10 @@ namespace GoParkAPI.Services
                 return new { success = false, message = "找不到對應的停車場資料。" };
             }
 
+            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
             // 4. 設定 LicensePlateKeyinTime 為目前時間
-            entryExitRecord.LicensePlateKeyinTime = DateTime.Now;
+            entryExitRecord.LicensePlateKeyinTime = currentTime;
 
             // 5. 計算停留時間（小時）
             var duration = entryExitRecord.LicensePlateKeyinTime - entryExitRecord.EntryTime;
@@ -421,8 +433,6 @@ namespace GoParkAPI.Services
             // 6. 使用停車場的 WeekdayRate 計算金額
             var amount = durationHours * parkingLot.WeekdayRate;
 
-            // 7. 查找符合條件的有效 Coupons
-            var currentTime = DateTime.Now;
             var coupons = await _context.Coupon
                 .Where(c => c.UserId == car.UserId &&
                             !c.IsUsed &&
