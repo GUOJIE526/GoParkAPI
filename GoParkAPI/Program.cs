@@ -33,7 +33,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         // 第三個網址是使用 ngrok 生成的外部可訪問網址(前端部分)/ by.shan shan
-        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173", "https://0a38-36-238-152-236.ngrok-free.app").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173", "https://2b8e-36-238-152-236.ngrok-free.app").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
 
