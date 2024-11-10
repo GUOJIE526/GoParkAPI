@@ -185,7 +185,7 @@ namespace GoParkAPI.Services
 
         //--------------------- 預約表單開始 ------------------------
 
-        public Reservation ResMapDtoToModel(PaymentRequestDto dto)
+        public Reservation ResMapDtoToModel(ECpayDTO dto)
         {
             DateTime startTime = (DateTime)dto.StartTime;
             TimeSpan overTime = TimeSpan.FromMinutes(15);
