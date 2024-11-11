@@ -30,7 +30,7 @@ namespace GoParkAPI.Controllers
             {
                 _logger.LogInformation("收到 webhook 事件");
                 _logger.LogInformation("收到 webhook 事件: {Body}", JsonConvert.SerializeObject(body));
-
+                _lineBotService.ReceiveWebhook(body);  // 呼叫 service
                 return Ok();
             }
             catch (Exception ex)
