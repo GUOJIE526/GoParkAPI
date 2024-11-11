@@ -29,5 +29,7 @@ public partial class Customer
 
     public virtual ICollection<Coupon> Coupon { get; set; } = new List<Coupon>();
 
+    public virtual ICollection<LineBinding> LineBinding { get; set; } = new List<LineBinding>();
+
     public virtual ICollection<Survey> Survey { get; set; } = new List<Survey>();
 }

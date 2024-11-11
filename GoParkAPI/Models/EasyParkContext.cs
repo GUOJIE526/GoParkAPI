@@ -179,7 +179,7 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<LineBinding>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__LineBind__3213E83F78473A2D");
+            entity.HasKey(e => e.Id).HasName("PK__LineBind__3213E83FBC00F87B");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
@@ -189,6 +189,10 @@ public partial class EasyParkContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("lineUser_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.LineBinding)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_LineBinding_Customer");
         });
 
         modelBuilder.Entity<MonApplyList>(entity =>
