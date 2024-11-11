@@ -9,6 +9,7 @@ using Hangfire.SqlServer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using System.Configuration;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,7 +61,9 @@ builder.Services.AddSingleton<JsonProvider>();
 builder.Services.AddHttpClient<LinePayService>();
 builder.Services.AddScoped<MyPayService>();
 builder.Services.AddScoped<ECService>();
-//builder.Services.AddScoped<ECService>();
+builder.Services.AddControllers();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration); // 注入 IConfiguration
+
 
 //----------------------------------------
 

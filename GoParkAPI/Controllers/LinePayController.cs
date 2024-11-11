@@ -375,9 +375,10 @@ namespace GoParkAPI.Controllers
                     // 3. 如果找不到記錄，返回錯誤訊息
                     return BadRequest(new { success = false, message = "未找到該車輛的進出記錄。" });
                 }
-
+                var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
                 // 4. 更新現有記錄的出場時間和支付金額
-                existingRecord.LicensePlateKeyinTime = DateTime.Now; // 設定出場時間為當前時間
+                existingRecord.LicensePlateKeyinTime = currentTime; // 設定出場時間為當前時間
                 existingRecord.Amount = dto.Amount; // 更新支付金額
 
                 // 5. 標記記錄為更新
