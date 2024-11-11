@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         // 第三個網址是使用 ngrok 生成的外部可訪問網址(前端部分)/ by.shan shan
-        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173", "https://blue-field-045272c00.5.azurestaticapps.net", "https://www.mygoparking.com/", "https://mygoparking.com/").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173", "https://www.mygoparking.com", "https://blue-field-045272c00.5.azurestaticapps.net", "https://mygoparking.com").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
 
