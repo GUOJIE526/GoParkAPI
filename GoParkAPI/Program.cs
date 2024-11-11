@@ -118,7 +118,11 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseCors();
 // 啟用 Hangfire Dashboard
-app.UseHangfireDashboard();
+//app.UseHangfireDashboard();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new AllowAnonymousAuthorization() }
+});
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapHub<ReservationHub>("/reservationHub");
