@@ -118,11 +118,11 @@ var app = builder.Build();
 // 在應用啟動時設置 Recurring Job
 //RecurringJob.AddOrUpdate<PushNotificationService>("CheckAndSendOverdueReminder", service => service.CheckAndSendOverdueReminder(), "*/2 * * * *"); // 每隔5分鐘執行一次
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 
 app.UseCors();
