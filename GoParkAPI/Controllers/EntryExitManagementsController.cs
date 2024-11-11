@@ -42,7 +42,7 @@ namespace GoParkAPI.Controllers
             var parkingRecords = _context.EntryExitManagement
                 .Where(record => userCars.Contains(record.Car.LicensePlate)) // 比對車牌號碼
                 .Where(record => string.IsNullOrEmpty(licensePlate) || record.Car.LicensePlate == licensePlate) //若有填寫車牌則進一步篩選
-                .Where(record => record.Parktype == "reservation")  //只顯示預定的停車紀錄，月租不顯示
+                .Where(record => record.Parktype == "Reservation")  //只顯示預定的停車紀錄，月租不顯示
                 .Select(record => new EntryExitManagementDTO
                 {
 
