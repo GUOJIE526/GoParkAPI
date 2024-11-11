@@ -32,6 +32,9 @@ namespace GoParkAPI.Controllers
         private readonly pwdHash _hash;
         private readonly MailService _sentmail;
         private readonly IConfiguration _configuration;
+        //private readonly IGoogleTokenService _googleTokenService;
+        //private readonly IUserService _userService;
+        //private readonly IJwtService _jwtService;
         public CustomersController(EasyParkContext context, pwdHash hash, MailService sentmail, IConfiguration configuration)
         {
             _context = context;
