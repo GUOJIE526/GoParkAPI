@@ -29,7 +29,7 @@ public partial class EntryExitManagement
 
     public DateTime? ExitTime { get; set; }
 
-    public bool? IsFinish { get; set; }
+    public bool IsFinish { get; set; }
 
     public virtual Car Car { get; set; } = null!;
 
