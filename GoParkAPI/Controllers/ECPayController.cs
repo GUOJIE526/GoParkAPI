@@ -1,6 +1,7 @@
 ﻿using GoParkAPI.DTO;
 using GoParkAPI.Models;
 using GoParkAPI.Services;
+using Hangfire;
 using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,9 @@ namespace GoParkAPI.Controllers
         private readonly MailService _sentmail;
         private readonly IConfiguration _configuration;
         private readonly string _ngrokBaseUrl;
-        public ECPayController(EasyParkContext context, ECService ecService, MailService sentmail, IConfiguration configuration)
+        private readonly PushNotificationService _pushNotification;
+
+        public ECPayController(EasyParkContext context, ECService ecService, MailService sentmail, IConfiguration configuration, PushNotificationService pushNotification)
         {
             _context = context;
             _ecService = ecService;
@@ -33,6 +36,7 @@ namespace GoParkAPI.Controllers
             _configuration = configuration;
             // 從配置中讀取 ngrokBaseUrl
             _ngrokBaseUrl = _configuration["NgrokSettings:BaseUrl"];
+            _pushNotification = pushNotification;
         }
 
         // 1. 生成 ECPay 月租表單
@@ -176,6 +180,18 @@ namespace GoParkAPI.Controllers
             else if (Pay == "Res")
             {
                 rentalRecord = await _context.Reservation.FirstOrDefaultAsync(r => r.TransactionId == MerchantTradeNo);
+
+                //--------------------------------HangFire付款確認後啟動---------------------------------
+                // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
+                var latestRes = await _context.Reservation
+                    .Where(r => r.TransactionId == MerchantTradeNo)
+                    .OrderByDescending(r => r.ResId)
+                    .Select(r => r.ResId)
+                    .FirstOrDefaultAsync();
+                //啟動Hangfire CheckAndSendOverdueReminder
+                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
+                //--------------------------------HangFire付款確認後啟動---------------------------------
+
             }
             else
             {
@@ -372,6 +388,7 @@ namespace GoParkAPI.Controllers
                     // 将当前时间转换为台北时间
                     var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
                     entryExitRecord.PaymentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
+                    entryExitRecord.ValidTime = entryExitRecord.PaymentTime.Value.AddMinutes(15);
 
                     // 处理完成后，从缓存中移除该交易记录
                     _merchantTradeNoCache.Remove(callbackData.MerchantTradeNo);
