@@ -37,10 +37,7 @@ namespace GoParkAPI.Controllers
         {
             //篩選該用戶車牌的預訂資料
             var parkingRecords = _context.EntryExitManagement
-                .Where(record => record.Car.UserId ==userId) // 比對車牌號碼   
-                .Where(record => record.Parktype == "Reservation")  //只顯示預定的停車紀錄，月租不顯示
-                .Where(record => record.IsFinish ==true)
-                
+                .Where(record => record.Car.UserId ==userId && record.Parktype == "Reservation" && record.IsFinish == true) // 比對車牌號碼                   
                 .Select(record => new EntryExitManagementDTO
                  {
                      entryexitId = record.EntryexitId,
@@ -49,15 +46,13 @@ namespace GoParkAPI.Controllers
                      licensePlate = record.Car.LicensePlate,
                      entryTime = (DateTime)record.EntryTime,
                      exitTime = record.ExitTime,
-                     totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
+                     totalMins = record.ExitTime.HasValue
+                        ? (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes
+                        : null,                    
                      amount = record.Amount
                  })
                 .OrderByDescending(record => record.entryTime);
                 
-            if (parkingRecords == null)
-            {
-                return null;
-            }
             return parkingRecords;
         }
 
