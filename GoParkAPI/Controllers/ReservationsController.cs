@@ -236,8 +236,9 @@ namespace GoParkAPI.Controllers
                 {
                     return BadRequest(new { Message = "無法取得用戶ID" });
                 }
-                var now = DateTime.Now;
-                if((resDTO.startTime - now).TotalHours > 6)
+                var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+                if((resDTO.startTime - taiwanTime).TotalHours > 6)
                 {
                     return BadRequest(new { Message = "預約時間不能大於現在時間6小時" });
                 }
