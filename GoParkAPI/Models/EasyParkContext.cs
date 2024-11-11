@@ -6,6 +6,10 @@ namespace GoParkAPI.Models;
 
 public partial class EasyParkContext : DbContext
 {
+    public EasyParkContext()
+    {
+    }
+
     public EasyParkContext(DbContextOptions<EasyParkContext> options)
         : base(options)
     {
@@ -175,10 +179,11 @@ public partial class EasyParkContext : DbContext
 
         modelBuilder.Entity<LineBinding>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__LineBind__3213E83FBC00F87B");
+            entity.HasKey(e => e.Id).HasName("PK__LineBind__3213E83F51691A49");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("createdAt");
             entity.Property(e => e.LineUserId)
