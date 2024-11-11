@@ -6,10 +6,6 @@ namespace GoParkAPI.Models;
 
 public partial class EasyParkContext : DbContext
 {
-    public EasyParkContext()
-    {
-    }
-
     public EasyParkContext(DbContextOptions<EasyParkContext> options)
         : base(options)
     {

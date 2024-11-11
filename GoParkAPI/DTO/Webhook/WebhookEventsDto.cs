@@ -22,6 +22,8 @@
         public PostbackEventDto? Postback { get; set; }
 
         public UnsendEventDto? Unsend { get; set; } //使用者“收回”訊息事件
+
+        public FollowEventDto? Follow { get; set; } //使用者加入好友或解除封鎖
     }
 
     //------------------------------
@@ -129,4 +131,11 @@
     {
         public string messageId { get; set; }
     }
+
+    public class FollowEventDto  //新增
+    {
+        public bool IsUnblocked { get; set; }
+    }
+
+
 }

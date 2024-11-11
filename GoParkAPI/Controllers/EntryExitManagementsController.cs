@@ -45,7 +45,7 @@ namespace GoParkAPI.Controllers
                 .Where(record => record.Parktype == "reservation")  //只顯示預定的停車紀錄，月租不顯示
                 .Select(record => new EntryExitManagementDTO
                 {
-                    
+
                     entryexitId = record.EntryexitId,
                     lotName = record.Lot.LotName,
                     district = record.Lot.District,
@@ -54,7 +54,8 @@ namespace GoParkAPI.Controllers
                     exitTime = record.ExitTime,
                     totalMins = (int)((TimeSpan)(record.ExitTime - record.EntryTime)).TotalMinutes,
                     amount = record.Amount
-                });
+                })
+                .OrderByDescending(record => record.entryTime);
             if (parkingRecords == null)
             {
                 return null;

@@ -32,9 +32,12 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        // 第三個網址是使用 ngrok 生成的外部可訪問網址(前端部分)/ by.shan shan
+        policy.WithOrigins("http://127.0.0.1:5500", "http://localhost:5173", "https://2b8e-36-238-152-236.ngrok-free.app").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
+
+
 
 // CORS
 //builder.Services.AddCors(options =>
@@ -47,6 +50,9 @@ builder.Services.AddCors(options =>
 //    });
 //});
 //----------------------------------------
+
+
+
 
 // 註冊 JsonProvider 作為 Singleton 服務
 builder.Services.AddSingleton<JsonProvider>();
@@ -114,9 +120,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
+app.UseCors();
 //app.MapHub<ReservationHub>("/reservationHub"); // 設置 SignalR Hub 路徑
 app.UseRouting();
-app.UseCors();
+
+
+
+
+
 // 啟用 Hangfire Dashboard
 //app.UseHangfireDashboard();
 app.UseHangfireDashboard("/hangfire", new DashboardOptions

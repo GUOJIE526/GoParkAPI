@@ -61,7 +61,8 @@ namespace GoParkAPI.Controllers
                     endDate = (DateTime)rental.EndDate,
                     amount = rental.Amount,  //付的總額
                     monRentalRate = rental.Lot.MonRentalRate
-                });
+                })
+                .OrderBy(rental => rental.endDate); // 最早到期的在前面;
 
             if (rentals == null)
             {
