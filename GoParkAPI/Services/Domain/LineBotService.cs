@@ -427,7 +427,7 @@ namespace GoParkAPI.Services.Domain
             try
             {
                 // Step 1: 獲取當前預訂資料
-                var response = await _httpClient.GetAsync($"https://localhost:7077/api/Reservations/CurrentReservations?userId={userId}");
+                var response = await _httpClient.GetAsync($"https://goparkapi.azurewebsites.net/api/Reservations/CurrentReservations?userId={userId}");
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
@@ -573,7 +573,7 @@ namespace GoParkAPI.Services.Domain
             {
                 // Step 1: 獲取要取消的預訂資料
                 int reservationId = int.Parse(resId);  // 將字串轉換為整數型態(api接收整數型態)
-                var response = await _httpClient.PutAsync($"https://localhost:7077/api/Reservations/{reservationId}", null);
+                var response = await _httpClient.PutAsync($"https://goparkapi.azurewebsites.net/api/Reservations/{reservationId}", null);
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
@@ -609,7 +609,7 @@ namespace GoParkAPI.Services.Domain
             try
             {
                 // Step 1: 獲取特定日期停車紀錄
-                var response = await _httpClient.GetAsync($"https://localhost:7077/api/EntryExitManagements/RecordByDate?userId={userId}&dateString={date}");
+                var response = await _httpClient.GetAsync($"https://goparkapi.azurewebsites.net/api/EntryExitManagements/RecordByDate?userId={userId}&dateString={date}");
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
