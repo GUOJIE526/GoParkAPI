@@ -94,12 +94,14 @@ namespace GoParkAPI.Services
             var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
             var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
             var userId = user.UserId;
+            var lot = await _context.ParkingLots.FirstOrDefaultAsync(l => l.LotId == reservation.LotId);
             if (reservation != null)
             {
                 if (reservation.ValidUntil < taiwanTime && !reservation.IsFinish && reservation.NotificationStatus)
                 {
                     reservation.IsFinish = true;
                     reservation.IsOverdue = true;
+                    lot.ValidSpace += 1;
                     user.BlackCount += 1;
                     if (user.BlackCount >= 3)
                     {
