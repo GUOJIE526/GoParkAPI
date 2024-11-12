@@ -87,7 +87,7 @@ namespace GoParkAPI.Services.Domain
                         else //如果沒綁定
                         {
                             _logger.LogInformation("該用戶未綁定");
-                        }                      
+                        }
                         break;
                     //這個暫時不需要
                     case WebhookEventTypeEnum.Unsend:
@@ -149,7 +149,7 @@ namespace GoParkAPI.Services.Domain
                                     Type = ActionTypeEnum.Uri,
                                     Label = "點擊綁定",
                                     //將用戶的lineUserId傳遞給後端  (uri是由5173 轉換的)
-                                    Uri = $"https://2b8e-36-238-152-236.ngrok-free.app/signIn?line_user_id={lineUserId}"
+                                    Uri = $"https://66ba-36-238-152-236.ngrok-free.app/signIn?line_user_id={lineUserId}"
                                 }
                             }
                         }

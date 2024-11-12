@@ -65,7 +65,7 @@ namespace GoParkAPI.Controllers
             LineBinding binding = new LineBinding
             {
                 UserId = userIdInt,
-                LineUserId = request.line_user_id
+                LineUserId = request.line_user_id,
             };
             _context.LineBinding.Add(binding);
 
