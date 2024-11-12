@@ -316,7 +316,7 @@ namespace GoParkAPI.Controllers
             var resetToken = tokenHandler.WriteToken(token);
 
             // 構建密碼重設連結
-            var resetLink = $"http://localhost:5173/reset?token={resetToken}";
+            var resetLink = $"https://www.mygoparking.com/reset?token={resetToken}";
 
             // 構建返回的 DTO，將 token 也傳回給前端
             var resetPasswordDto = new ResetDTO
