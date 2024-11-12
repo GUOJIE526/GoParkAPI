@@ -431,7 +431,7 @@ namespace GoParkAPI.Services.Domain
             try
             {
                 // Step 1: 獲取當前預訂資料
-                var response = await _httpClient.GetAsync($"${apiURI}/Reservations/CurrentReservations?userId={userId}");
+                var response = await _httpClient.GetAsync($"{apiURI}/Reservations/CurrentReservations?userId={userId}");
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
