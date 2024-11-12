@@ -99,13 +99,6 @@ namespace GoParkAPI.Controllers
             var requestBody = new
             {
                 to = lineUserId,
-                //messages = new[]
-                //{
-                //    new TextMessageDto
-                //    {
-                //        Text="綁定成功!"
-                //    }
-                //}
                 messages = new List<TemplateMessageDto<ButtonsTemplateDto>>
                 {
                     new TemplateMessageDto<ButtonsTemplateDto>

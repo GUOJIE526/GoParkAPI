@@ -23,6 +23,10 @@ namespace GoParkAPI.Services.Domain
         //messaging api channel 中的 accessToken & secret
         private readonly string channelAccessToken = "ryqtZiA6xa3TwMai/8Xqrgd7u8BRaPuw2fa/XhjG3Ij+contVfz60Uv8yuBXt4XTALlsRe2JUcTluWuSQlOhXkqvmWG27IoO8zsmdtSDa7iPOeKhh+hG5aS1Vcy5DFqQT4uaziHnsQHL8wiAoKbZ5wdB04t89/1O/w1cDnyilFU=";
         private readonly string channelSecret = "50d7c5c553b96a588eb086a7215d898d";
+        private readonly string clientURI = "https://66ba-36-238-152-236.ngrok-free.app";  //要記得改
+        private readonly string apiURI = "https://localhost:7077/api"; //要記得改
+
+
 
         //回復用戶訊息的api
         private readonly string replyMessageUri = "https://api.line.me/v2/bot/message/reply";
@@ -149,7 +153,7 @@ namespace GoParkAPI.Services.Domain
                                     Type = ActionTypeEnum.Uri,
                                     Label = "點擊綁定",
                                     //將用戶的lineUserId傳遞給後端  (uri是由5173 轉換的)
-                                    Uri = $"https://66ba-36-238-152-236.ngrok-free.app/signIn?line_user_id={lineUserId}"
+                                    Uri = $"{clientURI}/signIn?line_user_id={lineUserId}"
                                 }
                             }
                         }
@@ -427,7 +431,7 @@ namespace GoParkAPI.Services.Domain
             try
             {
                 // Step 1: 獲取當前預訂資料
-                var response = await _httpClient.GetAsync($"https://localhost:7077/api/Reservations/CurrentReservations?userId={userId}");
+                var response = await _httpClient.GetAsync($"${apiURI}/Reservations/CurrentReservations?userId={userId}");
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
@@ -573,7 +577,7 @@ namespace GoParkAPI.Services.Domain
             {
                 // Step 1: 獲取要取消的預訂資料
                 int reservationId = int.Parse(resId);  // 將字串轉換為整數型態(api接收整數型態)
-                var response = await _httpClient.PutAsync($"https://localhost:7077/api/Reservations/{reservationId}", null);
+                var response = await _httpClient.PutAsync($"{apiURI}/Reservations/{reservationId}", null);
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
@@ -609,7 +613,7 @@ namespace GoParkAPI.Services.Domain
             try
             {
                 // Step 1: 獲取特定日期停車紀錄
-                var response = await _httpClient.GetAsync($"https://localhost:7077/api/EntryExitManagements/RecordByDate?userId={userId}&dateString={date}");
+                var response = await _httpClient.GetAsync($"{apiURI}/EntryExitManagements/RecordByDate?userId={userId}&dateString={date}");
                 response.EnsureSuccessStatusCode(); // 確保狀態碼為 200
 
                 var jsonString = await response.Content.ReadAsStringAsync(); // 先讀取內容為字符串
