@@ -149,7 +149,7 @@ namespace GoParkAPI.Services.Domain
                                     Type = ActionTypeEnum.Uri,
                                     Label = "點擊綁定",
                                     //將用戶的lineUserId傳遞給後端  (uri是由5173 轉換的)
-                                    Uri = $"https://66ba-36-238-152-236.ngrok-free.app/signIn?line_user_id={lineUserId}"
+                                    Uri = $"https://www.mygoparking.com/signIn?line_user_id={lineUserId}"
                                 }
                             }
                         }
