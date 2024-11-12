@@ -7,7 +7,9 @@ using MailKit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net.Http;
 using System.Security.Policy;
 
 namespace GoParkAPI.Controllers
@@ -284,13 +286,13 @@ namespace GoParkAPI.Controllers
 
                 //--------------------------------HangFire付款確認後啟動---------------------------------
                 // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
-                //var latestRes = await _context.Reservation
-                //    .Where(r => r.TransactionId == dto.OrderId)
-                //    .OrderByDescending(r => r.ResId)
-                //    .Select(r => r.ResId)
-                //    .FirstOrDefaultAsync();
-                ////啟動Hangfire CheckAndSendOverdueReminder
-                //RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
+                var latestRes = await _context.Reservation
+                    .Where(r => r.TransactionId == dto.OrderId)
+                    .OrderByDescending(r => r.ResId)
+                    .Select(r => r.ResId)
+                    .FirstOrDefaultAsync();
+                //啟動Hangfire CheckAndSendOverdueReminder
+                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
                 //--------------------------------HangFire付款確認後啟動---------------------------------
 
                 Console.WriteLine($"成功發送郵件至 {customer.Email}");
