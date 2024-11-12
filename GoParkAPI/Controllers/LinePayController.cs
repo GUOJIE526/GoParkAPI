@@ -248,11 +248,28 @@ namespace GoParkAPI.Controllers
         public async Task<IActionResult> UpdateResPayment([FromBody] UpdatePaymentStatusDTO dto)
         {
             // 1. 查詢 Customer 資料
-            var customer = await _context.Reservation
-                .Where(m => m.TransactionId == dto.OrderId)
-                .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
-                .Join(_context.Customer, userId => userId, cu => cu.UserId, (userId, cu) => cu)
+            //var customer = await _context.Reservation
+            //    .Where(m => m.TransactionId == dto.OrderId)
+            //    .Join(_context.Car, m => m.CarId, c => c.CarId, (m, c) => c.UserId)
+            //    .Join(_context.Customer, userId => userId, cu => cu.UserId, (userId, cu) => cu)
+            //    .FirstOrDefaultAsync();
+            var reservation = await _context.Reservation
+                .Where(r => r.TransactionId == dto.OrderId)
                 .FirstOrDefaultAsync();
+            if (reservation == null)
+            {
+                return NotFound(new { success = false, message = "找不到對應的預約記錄。" });
+            }
+
+            var car = await _context.Car
+                .Where(c => c.CarId == reservation.CarId)
+                .FirstOrDefaultAsync();
+            if (car == null)
+            {
+                return NotFound(new { success = false, message = "找不到對應的車輛記錄。" });
+            }
+
+            var customer = await _context.Customer.Where(c => c.UserId == car.UserId).FirstOrDefaultAsync();
 
             if (customer == null)
             {
