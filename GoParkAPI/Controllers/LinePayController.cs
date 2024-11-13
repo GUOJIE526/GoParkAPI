@@ -132,29 +132,29 @@ namespace GoParkAPI.Controllers
 
 
             // 準備佔位符的值
-            var placeholders = new Dictionary<string, string>
-            {
-                { "username", customer.Username},
-                { "message", "您的月租已確認，感謝您使用 MyGoParking！" }
-            };
+            //var placeholders = new Dictionary<string, string>
+            //{
+            //    { "username", customer.Username},
+            //    { "message", "您的月租已確認，感謝您使用 MyGoParking！" }
+            //};
 
-            // 指定模板路徑
-            string templatePath = "Templates/EmailTemplate.html";
+            //// 指定模板路徑
+            //string templatePath = "Templates/EmailTemplate.html";
 
-            // 讀取模板並替換佔位符
-            string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
+            //// 讀取模板並替換佔位符
+            //string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
 
-            try
-            {
-                // 發送郵件
-                await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
-                Console.WriteLine($"成功發送郵件至 {customer.Email}");
-            }
-            catch (Exception ex)
-            {
-                // 捕捉並記錄郵件發送錯誤
-                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
-            }
+            //try
+            //{
+            //    // 發送郵件
+            //    await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
+            //    Console.WriteLine($"成功發送郵件至 {customer.Email}");
+            //}
+            //catch (Exception ex)
+            //{
+            //    // 捕捉並記錄郵件發送錯誤
+            //    Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            //}
 
             // 4. 返回成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
@@ -283,42 +283,42 @@ namespace GoParkAPI.Controllers
             {
                 return NotFound(new { success = false, message });
             }
+            //--------------------------------HangFire付款確認後啟動---------------------------------
+            // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
+            var latestRes = await _context.Reservation
+                .Where(r => r.TransactionId == dto.OrderId)
+                .OrderByDescending(r => r.ResId)
+                .Select(r => r.ResId)
+                .FirstOrDefaultAsync();
+            //啟動Hangfire CheckAndSendOverdueReminder
+            RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
+            //--------------------------------HangFire付款確認後啟動---------------------------------
             // 準備佔位符的值
-            var placeholders = new Dictionary<string, string>
-            {
-                { "username", customer.Username},
-                { "message", "您的預約已成功，請在約定的時間抵達，感謝您使用 MyGoParking！" }
-            };
+            //var placeholders = new Dictionary<string, string>
+            //{
+            //    { "username", customer.Username},
+            //    { "message", "您的預約已成功，請在約定的時間抵達，感謝您使用 MyGoParking！" }
+            //};
 
-            // 指定模板路徑
-            string templatePath = "Templates/EmailTemplate.html";
+            //// 指定模板路徑
+            //string templatePath = "Templates/EmailTemplate.html";
 
-            // 讀取模板並替換佔位符
-            string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
+            //// 讀取模板並替換佔位符
+            //string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
 
-            try
-            {
-                // 發送郵件
-                await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
+            //try
+            //{
+            //    // 發送郵件
+            //    await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
 
-                //--------------------------------HangFire付款確認後啟動---------------------------------
-                // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
-                var latestRes = await _context.Reservation
-                    .Where(r => r.TransactionId == dto.OrderId)
-                    .OrderByDescending(r => r.ResId)
-                    .Select(r => r.ResId)
-                    .FirstOrDefaultAsync();
-                //啟動Hangfire CheckAndSendOverdueReminder
-                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
-                //--------------------------------HangFire付款確認後啟動---------------------------------
 
-                Console.WriteLine($"成功發送郵件至 {customer.Email}");
-            }
-            catch (Exception ex)
-            {
-                // 捕捉並記錄郵件發送錯誤
-                Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
-            }
+            //    Console.WriteLine($"成功發送郵件至 {customer.Email}");
+            //}
+            //catch (Exception ex)
+            //{
+            //    // 捕捉並記錄郵件發送錯誤
+            //    Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
+            //}
 
             // 5. 支付成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
