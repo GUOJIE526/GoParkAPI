@@ -32,4 +32,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
     <PackageReference Include="WebPush" Version="1.0.12" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="EmailTemplate.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
