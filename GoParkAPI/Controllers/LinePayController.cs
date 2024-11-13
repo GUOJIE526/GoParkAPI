@@ -319,6 +319,22 @@ namespace GoParkAPI.Controllers
                 // 捕捉並記錄郵件發送錯誤
                 Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
             }
+            // 發送歡迎郵件
+            //if (!string.IsNullOrEmpty(customer.Email))
+            //{
+            //    string subject = "歡迎加入 MyGoParking!";
+            //    string message = $"<p>親愛的用戶：感謝您註冊，您已成功加入！<br>敬祝順利<br>mygoParking團隊</p>";
+
+            //    try
+            //    {
+            //        await _sentmail.SendEmailAsync(customer.Email, subject, message);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        // 錯誤處理
+            //        Console.WriteLine($"發送郵件失敗: {ex.Message}");
+            //    }
+            //}
 
             // 5. 支付成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
