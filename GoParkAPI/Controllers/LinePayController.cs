@@ -23,13 +23,15 @@ namespace GoParkAPI.Controllers
         private readonly EasyParkContext _context;
         private readonly MailService _sentmail;
         private readonly PushNotificationService _pushNotification;
-        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail, MyPayService myPayService, PushNotificationService pushNotification)
+        private readonly IHostEnvironment _enviroment;
+        public LinePayController(LinePayService linePayService, EasyParkContext context, MailService sentmail, MyPayService myPayService, PushNotificationService pushNotification, IHostEnvironment enviroment)
         {
             _linePayService = linePayService;
             _context = context;
             _sentmail = sentmail;
             _myPayService = myPayService;
             _pushNotification = pushNotification;
+            _enviroment = enviroment;
         }
 
         // ------------------------ 驗證月租方案是否相符開始 -------------------------------
@@ -300,8 +302,11 @@ namespace GoParkAPI.Controllers
                 { "message", "您的預約已成功，請在約定的時間抵達，感謝您使用 MyGoParking！" }
             };
 
+            // 假設模板文件放在專案根目錄
+            //string templatePath = "Templates/EmailTemplate.html";
+            var templatePath = Path.Combine(_enviroment.ContentRootPath, "EmailTemplate.html");
+
             // 指定模板路徑
-            string templatePath = "Templates/EmailTemplate.html";
 
             // 讀取模板並替換佔位符
             string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
