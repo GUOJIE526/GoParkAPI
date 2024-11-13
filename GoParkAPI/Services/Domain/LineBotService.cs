@@ -23,8 +23,8 @@ namespace GoParkAPI.Services.Domain
         //messaging api channel 中的 accessToken & secret
         private readonly string channelAccessToken = "ryqtZiA6xa3TwMai/8Xqrgd7u8BRaPuw2fa/XhjG3Ij+contVfz60Uv8yuBXt4XTALlsRe2JUcTluWuSQlOhXkqvmWG27IoO8zsmdtSDa7iPOeKhh+hG5aS1Vcy5DFqQT4uaziHnsQHL8wiAoKbZ5wdB04t89/1O/w1cDnyilFU=";
         private readonly string channelSecret = "50d7c5c553b96a588eb086a7215d898d";
-        private readonly string clientURI = "https://66ba-36-238-152-236.ngrok-free.app";  //要記得改
-        private readonly string apiURI = "https://localhost:7077/api"; //要記得改
+        private readonly string clientURI = "https://www.mygoparking.com";  //要記得改
+        private readonly string apiURI = "https://goparkapi.azurewebsites.net/api"; //要記得改
 
 
 
