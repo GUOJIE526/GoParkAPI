@@ -320,7 +320,7 @@ namespace GoParkAPI.Controllers
         [HttpPost("ChargeCreate")]
         public async Task<IActionResult> ChargeCreate([FromBody] ECpayDTO dto)
         {
-            // 根据 CarId 和 LotId 查找现有的进出记录
+            // 根据 CarId 和 LotId 查找現有的進出記錄
             var existingRecord = await _context.EntryExitManagement
                     .FirstOrDefaultAsync(e => e.CarId == dto.CarId && e.LotId == dto.LotId);
 
@@ -351,12 +351,11 @@ namespace GoParkAPI.Controllers
                 { "ClientBackURL", $"{dto.ClientBackURL}?MerchantTradeNo={merchantTradeNo}" },
                 { "ChoosePayment", "ALL" }
              };
-
-            // 生成检核码并添加到参数
+            //檢核碼並加到參數
             string checkMacValue = GenerateCheckMacValue(paymentParameters);
             paymentParameters.Add("CheckMacValue", checkMacValue);
 
-            // 更新现有记录的出场时间和支付金额
+            // 更新現在出場記錄時間和支付金額
             existingRecord.LicensePlateKeyinTime = DateTime.Now;
             existingRecord.Amount = dto.TotalAmount;
             _context.EntryExitManagement.Update(existingRecord);
@@ -385,12 +384,12 @@ namespace GoParkAPI.Controllers
                 if (callbackData.RtnCode == "1") // 1 代表交易成功
                 {
                     entryExitRecord.PaymentStatus = true;
-                    // 将当前时间转换为台北时间
+                    // 將當前時間轉為台北時間
                     var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
                     entryExitRecord.PaymentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
                     entryExitRecord.ValidTime = entryExitRecord.PaymentTime.Value.AddMinutes(15);
 
-                    // 处理完成后，从缓存中移除该交易记录
+                    // 處理完成以後從緩存刪除交易記錄
                     _merchantTradeNoCache.Remove(callbackData.MerchantTradeNo);
                 }
             }
