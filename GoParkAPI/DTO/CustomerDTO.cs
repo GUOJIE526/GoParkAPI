@@ -3,15 +3,24 @@
     public class CustomerDTO
     {
         public int UserId { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string Salt { get; set; }
-        public string Email { get; set; }
-        public string Phone { get; set; }
-        public string LicensePlate { get; set; }
+        public string? Username { get; set; }
+        public string? Password { get; set; }
+        public string? Salt { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? LicensePlate { get; set; }
         public bool IsBlack { get; set; }
 
     }
+
+    public class EditDTO
+    {
+        public string? Username { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? LicensePlate { get; set; }
+    }
+
 
     public class CouponDTO
     {

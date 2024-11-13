@@ -91,9 +91,10 @@ namespace GoParkAPI.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         //網址列id 第一個參數
         [HttpPut("id{id}")]
-        public async Task<string> PutCustomer(int id, CustomerDTO custDTO)
+        public async Task<string> PutCustomer(int id, EditDTO custDTO)
         {
-            if (id != custDTO.UserId)
+            var customer = await _context.Customer.FindAsync(id);
+            if (id != customer.UserId)
             {
                 return "無法修改";
             }
@@ -114,15 +115,15 @@ namespace GoParkAPI.Controllers
 
 
 
-            // 密碼加密與加鹽
-            var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
-            custDTO.Password = hashedPassword;
-            custDTO.Salt = salt;
+            //// 密碼加密與加鹽
+            //var (hashedPassword, salt) = _hash.HashPassword(custDTO.Password);
+            //custDTO.Password = hashedPassword;
+            //custDTO.Salt = salt;
 
             // 更新 Customer 資料
             cust.Username = custDTO.Username;
-            cust.Password = custDTO.Password; // 確保已經 hash 過密碼
-            cust.Salt = custDTO.Salt;
+            //cust.Password = custDTO.Password; // 確保已經 hash 過密碼
+            //cust.Salt = custDTO.Salt;
             cust.Email = custDTO.Email;
             cust.Phone = custDTO.Phone;
 
