@@ -20,6 +20,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Configuration;
+//using Microsoft.AspNetCore.Identity;
+//using Google.Apis.Auth;
 
 namespace GoParkAPI.Controllers
 {
@@ -32,15 +34,14 @@ namespace GoParkAPI.Controllers
         private readonly pwdHash _hash;
         private readonly MailService _sentmail;
         private readonly IConfiguration _configuration;
-        //private readonly IGoogleTokenService _googleTokenService;
-        //private readonly IUserService _userService;
-        //private readonly IJwtService _jwtService;
-        public CustomersController(EasyParkContext context, pwdHash hash, MailService sentmail, IConfiguration configuration)
+        
+        public CustomersController(EasyParkContext context, pwdHash hash, MailService sentmail, IConfiguration configuration )
         {
             _context = context;
             _hash = hash;
             _sentmail = sentmail;
             _configuration = configuration;
+            
         }
 
        
@@ -316,7 +317,7 @@ namespace GoParkAPI.Controllers
             var resetToken = tokenHandler.WriteToken(token);
 
             // 構建密碼重設連結
-            var resetLink = $"http://localhost:5173/reset?token={resetToken}";
+            var resetLink = $"https://www.mygoparking.com/reset?token={resetToken}";
 
             // 構建返回的 DTO，將 token 也傳回給前端
             var resetPasswordDto = new ResetDTO
@@ -426,6 +427,8 @@ namespace GoParkAPI.Controllers
 
         }
 
+       
+
         [HttpPost("coupon")]
         public async Task<ActionResult<CouponDTO>> AddCoupon(CouponDTO coupDTO)
         {
@@ -456,6 +459,117 @@ namespace GoParkAPI.Controllers
             }
             return Ok(new { message = "領取失敗, 請洽客服人員", success = false });
         }
+
+
+        //[HttpPost("googleLogin")]
+        //public async Task<IActionResult> GoogleLogin(GoogleLoginDTO googleDto)
+        //{
+        //    var googleUser = await VerifyGoogleTokenAsync(googleDto.Token);
+        //    if (googleUser == null)
+        //    {
+        //        return BadRequest(new { message = "Google 登入驗證失敗" });
+        //    }
+
+        //    // 根據 Google 的 email 查找用戶
+        //    var existingCustomer = await _context.Customer.FirstOrDefaultAsync(c => c.Email == googleUser.Email);
+
+        //    if (existingCustomer != null)
+        //    {
+        //        // 如果已經有帳號，回傳用戶資訊，允許選擇合併帳號
+        //        return Ok(new
+        //        {
+        //            message = "帳號已存在，是否要合併 Google 帳號？",
+        //        });
+        //    }
+        //    else
+        //    {
+        //        // 如果帳號不存在，創建新用戶
+        //        Customer newCustomer = new Customer
+        //        {
+        //            Username = googleUser.Name,  // 從 Google 獲取的名字
+        //            Email = googleUser.Email,
+        //        };
+        //        _context.Customer.Add(newCustomer);
+        //        await _context.SaveChangesAsync();
+
+        //        // 讓用戶填寫車牌，並創建新車輛記錄
+        //        Car car = new Car
+        //        {
+        //            LicensePlate = googleDto.LicensePlate, // 前端要求用戶填寫車牌號碼
+        //            UserId = newCustomer.UserId,
+        //            IsActive = true
+        //        };
+        //        _context.Car.Add(car);
+        //        await _context.SaveChangesAsync();
+
+        //        return Ok(new
+        //        {
+        //            message = "Google 登入成功，請填寫車牌資料。"
+        //        });
+        //    }
+        //}
+
+        //[HttpPost("mergeAccount")]
+        //public async Task<IActionResult> MergeAccount(MergeAccountsDTO mergeDto)
+        //{
+        //    // 驗證 Google Token
+        //    var googleUser = await VerifyGoogleTokenAsync(mergeDto.GoogleToken);
+        //    if (googleUser == null)
+        //    {
+        //        return BadRequest(new { message = "Google 驗證失敗" });
+        //    }
+
+        //    // 根據 UserId 獲取現有用戶
+        //    var existingCustomer = await _context.Customer.FindAsync(mergeDto.UserId);
+        //    if (existingCustomer == null)
+        //    {
+        //        return NotFound(new { message = "用戶不存在" });
+        //    }
+
+        //    // 將 Google 帳號和現有帳號進行合併
+        //    existingCustomer.Email = googleUser.Email;
+        //    existingCustomer.Username = googleUser.Name;      // 可以選擇更新現有帳號的其他資料
+        //    _context.Customer.Update(existingCustomer);
+        //    await _context.SaveChangesAsync();
+
+        //    // 合併成功後，自動登入用戶
+        //    return Ok(new
+        //    {
+        //        message = "帳號合併成功",
+        //        user = new
+        //        {
+        //            existingCustomer.UserId,
+        //            existingCustomer.Username,
+        //            existingCustomer.Email,
+        //            existingCustomer.Phone
+        //        }
+        //    });
+        //}
+        //[HttpPost("verify")]
+        // public async Task<GoogleUserDTO> VerifyGoogleTokenAsync(string token)
+        //{
+        //    var settings = new GoogleJsonWebSignature.ValidationSettings()
+        //    {
+        //        Audience = new List<string>() { _configuration["GoogleOAuth:1082013721099-pvgt90o9snnqur6kir30q4ccjqr1889e.apps.googleusercontent.com"] }
+        //    };
+
+        //    try
+        //    {
+        //        var payload = await GoogleJsonWebSignature.ValidateAsync(token, settings);
+
+        //        // 返回驗證成功的用戶資料
+        //        return new GoogleUserDTO
+        //        {
+        //            Email = payload.Email,
+        //            Name = payload.Name,
+        //        };
+        //    }
+        //    catch
+        //    {
+        //        // 驗證失敗，返回錯誤
+        //        return null;
+        //    }
+        //}
 
 
 
