@@ -391,6 +391,7 @@ namespace GoParkAPI.Controllers
 
                 // 2. 根據 CarId 和 LotId 查找現有的進出記錄
                 var existingRecord = await _context.EntryExitManagement
+                    .OrderByDescending(e => e.EntryexitId)
                     .FirstOrDefaultAsync(e => e.CarId == dto.CarId && e.LotId == dto.LotId);
 
                 if (existingRecord == null)

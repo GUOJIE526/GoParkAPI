@@ -322,7 +322,7 @@ namespace GoParkAPI.Controllers
         {
             // 根据 CarId 和 LotId 查找現有的進出記錄
             var existingRecord = await _context.EntryExitManagement
-                    .FirstOrDefaultAsync(e => e.CarId == dto.CarId && e.LotId == dto.LotId);
+                    .OrderByDescending(e => e.EntryexitId).FirstOrDefaultAsync(e => e.CarId == dto.CarId && e.LotId == dto.LotId);
 
             if (existingRecord == null)
             {
@@ -356,7 +356,9 @@ namespace GoParkAPI.Controllers
             paymentParameters.Add("CheckMacValue", checkMacValue);
 
             // 更新現在出場記錄時間和支付金額
-            existingRecord.LicensePlateKeyinTime = DateTime.Now;
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+            existingRecord.LicensePlateKeyinTime = taiwanTime;
             existingRecord.Amount = dto.TotalAmount;
             _context.EntryExitManagement.Update(existingRecord);
             await _context.SaveChangesAsync();
