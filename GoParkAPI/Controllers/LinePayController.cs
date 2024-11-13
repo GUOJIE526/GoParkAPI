@@ -285,16 +285,6 @@ namespace GoParkAPI.Controllers
             {
                 return NotFound(new { success = false, message });
             }
-            //--------------------------------HangFire付款確認後啟動---------------------------------
-            // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
-            var latestRes = await _context.Reservation
-                .Where(r => r.TransactionId == dto.OrderId)
-                .OrderByDescending(r => r.ResId)
-                .Select(r => r.ResId)
-                .FirstOrDefaultAsync();
-            //啟動Hangfire CheckAndSendOverdueReminder
-            RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
-            //--------------------------------HangFire付款確認後啟動---------------------------------
             // 準備佔位符的值
             var placeholders = new Dictionary<string, string>
             {
@@ -316,6 +306,16 @@ namespace GoParkAPI.Controllers
                 // 發送郵件
                 await _sentmail.SendEmailAsync(customer.Email, "MyGoParking 通知", emailBody);
 
+                //--------------------------------HangFire付款確認後啟動---------------------------------
+                // 查詢該車輛的最新預約記錄 (根據 resId 排序並選擇最新的一筆)
+                var latestRes = await _context.Reservation
+                    .Where(r => r.TransactionId == dto.OrderId)
+                    .OrderByDescending(r => r.ResId)
+                    .Select(r => r.ResId)
+                    .FirstOrDefaultAsync();
+                //啟動Hangfire CheckAndSendOverdueReminder
+                RecurringJob.AddOrUpdate($"OverdueReminder_{latestRes}", () => _pushNotification.CheckAndSendOverdueReminder(latestRes), "*/1 * * * *");
+                //--------------------------------HangFire付款確認後啟動---------------------------------
 
                 Console.WriteLine($"成功發送郵件至 {customer.Email}");
             }
@@ -324,23 +324,6 @@ namespace GoParkAPI.Controllers
                 // 捕捉並記錄郵件發送錯誤
                 Console.WriteLine($"發送郵件時發生錯誤: {ex.Message}");
             }
-            // 發送歡迎郵件
-            //if (!string.IsNullOrEmpty(customer.Email))
-            //{
-            //    string subject = "歡迎加入 MyGoParking!";
-            //    string message = $"<p>親愛的用戶：感謝您註冊，您已成功加入！<br>敬祝順利<br>mygoParking團隊</p>";
-
-            //    try
-            //    {
-            //        await _sentmail.SendEmailAsync(customer.Email, subject, message);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        // 錯誤處理
-            //        Console.WriteLine($"發送郵件失敗: {ex.Message}");
-            //    }
-            //}
-
             // 5. 支付成功回應
             return Ok(new { success = true, message = "支付狀態更新成功並已發送通知。" });
         }
