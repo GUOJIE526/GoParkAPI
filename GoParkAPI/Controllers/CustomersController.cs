@@ -439,7 +439,7 @@ namespace GoParkAPI.Controllers
                     Coupon coup = new Coupon
                     {
                         CouponId = coupDTO.CouponId,
-                        CouponCode = coupDTO.CouponCode + 1000,
+                        CouponCode = coupDTO.CouponCode,
                         DiscountAmount = coupDTO.DiscountAmount,
                         ValidFrom = coupDTO.ValidFrom,
                         ValidUntil = coupDTO.ValidUntil,
