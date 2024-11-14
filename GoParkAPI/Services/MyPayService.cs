@@ -268,10 +268,10 @@ namespace GoParkAPI.Services
                 return (false, "未找到該車輛的進出記錄。");
             }
 
-            var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
-            var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
             // 設定 LicensePlateKeyinTime 為目前時間
-            entryExitRecord.LicensePlateKeyinTime = currentTime;
+            entryExitRecord.LicensePlateKeyinTime = taiwanTime;
 
             // 3. 計算停留時間（小時）
             TimeSpan? duration = entryExitRecord.LicensePlateKeyinTime - entryExitRecord.EntryTime;
@@ -312,7 +312,7 @@ namespace GoParkAPI.Services
             if (finalAmount != dto.Amount)
             {
                 Console.WriteLine("檢測的金額為:" + finalAmount);
-                return (false, "金額不正確。");
+                return (false, $"金額不正確。{finalAmount},{originalAmount},{discountAmount}");
             }
             Console.WriteLine("檢測的金額為:" + finalAmount);
             // 8. 返回成功訊息
