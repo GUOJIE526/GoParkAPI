@@ -52,6 +52,9 @@ namespace GoParkAPI.Controllers
         {
 
             IQueryable<CouponsDTO> vouchers = null;
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
             //篩選該用戶擁有的優惠券
             switch (filter)
             {
@@ -72,7 +75,7 @@ namespace GoParkAPI.Controllers
                 case "available":
                     // 返回未使用的優惠券
                     vouchers = _context.Coupon
-                        .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date > DateTime.Now.Date)
+                        .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date > taiwanTime.Date)
                         .Select(coupon => new CouponsDTO
                         {
                             couponId = coupon.CouponId,
@@ -86,7 +89,7 @@ namespace GoParkAPI.Controllers
                 case "expired":
                     // 返回已失效的優惠券
                     vouchers = _context.Coupon
-                        .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date < DateTime.Now.Date)
+                        .Where(coupon => coupon.UserId == userId && !coupon.IsUsed && coupon.ValidUntil.Date < taiwanTime.Date)
                         .Select(coupon => new CouponsDTO
                         {
                             couponId = coupon.CouponId,

@@ -166,7 +166,7 @@ namespace GoParkAPI.Services
         public Reservation ResMapDtoToModel(ECpayDTO dto)
         {
             DateTime startTime = (DateTime)dto.StartTime;
-            TimeSpan overTime = TimeSpan.FromMinutes(15);
+            TimeSpan overTime = TimeSpan.FromMinutes(3);
             DateTime vaildTime = startTime.Add(overTime);
             var taipeiTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
             var currentTime = TimeZoneInfo.ConvertTime(DateTime.Now, taipeiTimeZone);

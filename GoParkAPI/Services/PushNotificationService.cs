@@ -62,16 +62,22 @@ namespace GoParkAPI.Services
             var minutesLater = taiwanTime.AddMinutes(30);
 
             // 根據條件查找第一個符合條件的 Reservation 記錄
-            var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
-            var user = await _context.Reservation.Where(r => r.ResId == resId).Select(r => r.Car.UserId).FirstOrDefaultAsync();
-
-            if (res != null)
+            //var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
+            //var user = await _context.Reservation.Where(r => r.ResId == resId).Select(r => r.Car.UserId).FirstOrDefaultAsync();
+            var result = await (from r in _context.Reservation join c in _context.Car on r.CarId equals c.CarId join u in _context.Customer on c.UserId equals u.UserId where r.ResId == resId select new
             {
+                Reservation = r,
+                CarUserId = u.UserId
+            }).FirstOrDefaultAsync();
+
+            if (result != null)
+            {
+                var res = result.Reservation;
                 if (res.StartTime <= minutesLater && res.StartTime > taiwanTime && res.PaymentStatus && !res.NotificationStatus && !res.IsFinish)
                 {
                     res.NotificationStatus = true;
                     await _context.SaveChangesAsync();
-                    await _hubContext.Clients.User(user.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
+                    await _hubContext.Clients.User(result.CarUserId.ToString()).SendAsync("ReceiveNotification", "預約提醒", "您的預約將在30分鐘後超時，請在安全前提下盡快入場，逾時車位不保留。");
                     //啟動Hangfire CheckAlreadyOverdueRemider
                     RecurringJob.AddOrUpdate($"AlreadyOverdueReminder_{resId}", () => CheckAlreadyOverdueRemider(resId), "*/1 * * * *");
                     return true;

@@ -94,11 +94,14 @@ namespace GoParkAPI.Controllers
                     return BadRequest(new { success = false, message = $"新增失敗: 車牌 {car.licensePlate} 已存在" });
                 }
 
+                var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
                 Car newCar = new Car
                 {
                     UserId = userId,
                     LicensePlate = car.licensePlate,
-                    RegisterDate = DateTime.Now,
+                    RegisterDate = taiwanTime,
                     IsActive = car.isActive
                 };
                 _context.Car.Add(newCar);

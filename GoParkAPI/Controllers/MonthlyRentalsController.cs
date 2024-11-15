@@ -192,12 +192,16 @@ namespace GoParkAPI.Controllers
                 {
                     return BadRequest(new { Message = "無法找到對應的車輛" });
                 }
+
+                var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
                 //寫進MonApplyList
                 var newApplay = new MonApplyList
                 {
                     CarId = car.CarId,
                     LotId = monApplayDTO.LotId,
-                    ApplyDate = DateTime.Now,
+                    ApplyDate = taiwanTime,
                 };
                 _context.MonApplyList.Add(newApplay);
                 await _context.SaveChangesAsync();

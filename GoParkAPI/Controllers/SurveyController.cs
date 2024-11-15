@@ -21,12 +21,15 @@ namespace GoParkAPI.Controllers
         {
             if (ModelState.IsValid)
             {
+                var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
                 Survey newsurvey = new Survey {
                     Id = 0,
                     UserId = survey.UserId,
                     Question = survey.Question,
                     IsReplied = false,
-                    SubmittedAt = DateTime.Now,
+                    SubmittedAt = taiwanTime,
                     Status = "未回覆"
                 };
 

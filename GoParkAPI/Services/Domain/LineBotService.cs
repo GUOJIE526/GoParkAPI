@@ -322,7 +322,10 @@ namespace GoParkAPI.Services.Domain
         //當點預訂查詢會出現的Quick Reply(當前預訂、返回選單)
         private void ShowReservationQuickReply(string replyToken)
         {
-            var today = DateTime.Now;
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
+            var today = taiwanTime;
             var oneYearAgo = today.AddYears(-1);
 
             // 格式化日期为只包含日期的格式 (yyyy-MM-dd)
@@ -373,7 +376,10 @@ namespace GoParkAPI.Services.Domain
         //當點停車紀錄查詢會出現的quick reply(選擇日期、返回選單)
         private void ShowRecordQuickReply(string replyToken)
         {
-            var today = DateTime.Now;
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
+            var today = taiwanTime;
             var oneYearAgo = today.AddYears(-1);
 
             // 格式化日期为只包含日期的格式 (yyyy-MM-dd)

@@ -39,12 +39,15 @@ namespace GoParkAPI.Services
             TimeSpan overdueTime = TimeSpan.FromHours(parkingLots.ResOverdueValidTimeSet);
             DateTime validUntil = startTime.Add(overdueTime);
 
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
             //創建新預約
             var newRes = new Reservation
             {
                 CarId = _context.Car.FirstOrDefault(c => c.LicensePlate == resDTO.licensePlate).CarId,
                 LotId = parkingLots.LotId,
-                ResTime = DateTime.Now,
+                ResTime = taiwanTime,
                 StartTime = startTime,
                 ValidUntil = validUntil, //保存計算結果
             };

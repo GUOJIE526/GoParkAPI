@@ -46,7 +46,10 @@ namespace GoParkAPI.Controllers
             var lot = await _context.ParkingLots.FirstOrDefaultAsync(p => p.LotId == dto.LotId);
             if (lot == null) return BadRequest("無效的停車場");
 
-            var merchantTradeNo = "MyGo" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
+            var merchantTradeNo = "MyGo" + taiwanTime.ToString("yyyyMMddHHmmss");
             dto.OrderId = merchantTradeNo;
 
             // 構建支付參數
@@ -54,7 +57,7 @@ namespace GoParkAPI.Controllers
             {
                 { "MerchantID", "3002607" },
                 { "MerchantTradeNo", merchantTradeNo },
-                { "MerchantTradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
+                { "MerchantTradeDate", taiwanTime.ToString("yyyy/MM/dd HH:mm:ss") },
                 { "PaymentType", "aio" },
                 { "TotalAmount", $"{dto.TotalAmount}" },
                 { "TradeDesc", dto.ItemName },
@@ -215,15 +218,19 @@ namespace GoParkAPI.Controllers
             var lot = await _context.ParkingLots.FirstOrDefaultAsync(p => p.LotId == dto.LotId);
             if (lot == null) return BadRequest("無效的停車場");
 
-            var merchantTradeNo = "MyGo" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
+            var merchantTradeNo = "MyGo" + taiwanTime.ToString("yyyyMMddHHmmss");
             dto.OrderId = merchantTradeNo;
+
 
             // 構建支付參數
             var paymentParameters = new Dictionary<string, string>
             {
                 { "MerchantID", "3002607" },
                 { "MerchantTradeNo", merchantTradeNo },
-                { "MerchantTradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
+                { "MerchantTradeDate", taiwanTime.ToString("yyyy/MM/dd HH:mm:ss") },
                 { "PaymentType", "aio" },
                 { "TotalAmount", $"{dto.TotalAmount}" },
                 { "TradeDesc", dto.ItemName },
@@ -330,9 +337,12 @@ namespace GoParkAPI.Controllers
                 return BadRequest(new { success = false, message = "未找到該車輛的進出記錄。" });
             }
 
+            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
+
             // 查找 LotName
             var ParkName = await _context.ParkingLots.FirstOrDefaultAsync(l => l.LotId == dto.LotId);
-            var merchantTradeNo = "MyGo" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            var merchantTradeNo = "MyGo" + taiwanTime.ToString("yyyyMMddHHmmss");
             dto.OrderId = merchantTradeNo;
 
             // 存储 MerchantTradeNo 和 EntryexitId 的映射到缓存中
@@ -343,7 +353,7 @@ namespace GoParkAPI.Controllers
             {
                 { "MerchantID", "3002607" },
                 { "MerchantTradeNo", merchantTradeNo },
-                { "MerchantTradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
+                { "MerchantTradeDate", taiwanTime.ToString("yyyy/MM/dd HH:mm:ss") },
                 { "PaymentType", "aio" },
                 { "TotalAmount", $"{dto.TotalAmount}" },
                 { "TradeDesc", dto.ItemName },
@@ -357,8 +367,6 @@ namespace GoParkAPI.Controllers
             paymentParameters.Add("CheckMacValue", checkMacValue);
 
             // 更新現在出場記錄時間和支付金額
-            var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
-            var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
             existingRecord.LicensePlateKeyinTime = taiwanTime;
             existingRecord.Amount = dto.TotalAmount;
             _context.EntryExitManagement.Update(existingRecord);
