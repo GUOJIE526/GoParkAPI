@@ -95,14 +95,31 @@ namespace GoParkAPI.Services
         {
             var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
             var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
-            //var now = DateTime.Now;
-            var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
-            var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
-            var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
-            var userId = user.UserId;
-            var lot = await _context.ParkingLots.FirstOrDefaultAsync(l => l.LotId == reservation.LotId);
-            if (reservation != null)
+            //var reservation = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
+            //var car = await _context.Car.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
+            //var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == car.UserId);
+            //var userId = user.UserId;
+            //var lot = await _context.ParkingLots.FirstOrDefaultAsync(l => l.LotId == reservation.LotId);
+            var result = await (from r in _context.Reservation
+                                join c in _context.Car on r.CarId equals c.CarId
+                                join u in _context.Customer on c.UserId equals u.UserId
+                                join p in _context.ParkingLots on r.LotId equals p.LotId
+                                where r.ResId == resId
+                                select new
+                                {
+                                    Reservation = r,
+                                    Car = c,
+                                    User = u,
+                                    Lot = p
+                                }).FirstOrDefaultAsync();
+
+            if (result != null)
             {
+                var reservation = result.Reservation;
+                var user = result.User;
+                var userId = user.UserId;
+                var lot = result.Lot;
+
                 if (reservation.ValidUntil < taiwanTime && !reservation.IsFinish && reservation.NotificationStatus)
                 {
                     reservation.IsFinish = true;
