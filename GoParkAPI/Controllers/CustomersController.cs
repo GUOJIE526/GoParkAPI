@@ -428,30 +428,32 @@ namespace GoParkAPI.Controllers
         }
 
         [HttpPost("coupon")]
-        public async Task<ActionResult<CouponDTO>> AddCoupon(CouponDTO coupDTO)
+        public async Task<ActionResult<CouponDTO>> AddCoupon([FromBody] int User)
         {
-            var userId = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == coupDTO.UserId);
+            var user = await _context.Customer.FirstOrDefaultAsync(u => u.UserId == User);
 
-            if (userId != null)
+            if (user != null)
             {
                 for (int i = 0; i < 3; i++)
                 {
+                    Guid g1 = Guid.NewGuid();//32位
+
                     Coupon coup = new Coupon
                     {
-                        CouponId = coupDTO.CouponId,
-                        CouponCode = coupDTO.CouponCode,
-                        DiscountAmount = coupDTO.DiscountAmount,
-                        ValidFrom = coupDTO.ValidFrom,
-                        ValidUntil = coupDTO.ValidUntil,
-                        IsUsed = coupDTO.IsUsed,
-                        UserId = coupDTO.UserId
+                        CouponCode = "#" + g1.ToString(),
+                        DiscountAmount = 50,
+                        ValidFrom = DateTime.Now,
+                        ValidUntil = DateTime.Now.AddYears(1),//有效期一年
+                        IsUsed = false,
+                        UserId = user.UserId,
                     };
                     _context.Coupon.Add(coup);//加進資料庫 
                 }
                 await _context.SaveChangesAsync();//存檔 
                 return Ok(new { message = "成功領取三張優惠券!", success = true });
             }
-            else if(userId == null)
+
+            else if(user == null)
             {
                 return Ok(new { message = "領取失敗,您尚未註冊或登入", success = false});
             }
