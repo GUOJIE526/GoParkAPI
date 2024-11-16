@@ -461,14 +461,20 @@ namespace GoParkAPI.Controllers
         }
 
         [HttpGet("MapApiKey")]
-        public IActionResult GetGoogleMapKey()
+        public async Task<IActionResult> GetGoogleMapKey([FromQuery] double Lat, [FromQuery] double lng)
         {
             string googleMapKey = Environment.GetEnvironmentVariable("GOOGLE_MAP_API_KEY");
-            if (string.IsNullOrEmpty(googleMapKey))
+            string googleMapUrl = $"https://maps.googleapis.com/maps/api/staticmap?center={Lat},{lng}&zoom=18&size=600x300&markers=color:red%7Clabel:P%7C{Lat},{lng}&key={googleMapKey}";
+
+            using var client = new HttpClient();
+            var response = await client.GetAsync(googleMapUrl);
+            if (!response.IsSuccessStatusCode)
             {
-                return NotFound("Google Map API Key not found");
+                return StatusCode((int)response.StatusCode, "Failed to fetch map from Google API");
             }
-            return Ok(new { apiKey = googleMapKey });
+            var content = await response.Content.ReadAsByteArrayAsync();
+            return File(content, "image/png");
+
         }
         // DELETE: api/Customers/5
         //[HttpDelete("{id}")]
