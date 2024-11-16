@@ -460,8 +460,16 @@ namespace GoParkAPI.Controllers
             return Ok(new { message = "領取失敗, 請洽客服人員", success = false });
         }
 
-
-
+        [HttpGet("MapApiKey")]
+        public IActionResult GetGoogleMapKey()
+        {
+            string googleMapKey = Environment.GetEnvironmentVariable("GOOGLE_MAP_API_KEY");
+            if (string.IsNullOrEmpty(googleMapKey))
+            {
+                return NotFound("Google Map API Key not found");
+            }
+            return Ok(new { apiKey = googleMapKey });
+        }
         // DELETE: api/Customers/5
         //[HttpDelete("{id}")]
         //public async Task<IActionResult> DeleteCustomer(int id)
@@ -472,11 +480,11 @@ namespace GoParkAPI.Controllers
         //        return NotFound();
         //    }
 
-        //    _context.Customer.Remove(customer);
-        //    await _context.SaveChangesAsync();
+            //    _context.Customer.Remove(customer);
+            //    await _context.SaveChangesAsync();
 
-        //    return NoContent();
-        //}
+            //    return NoContent();
+            //}
 
         private bool CustomerExists(int id)
         {
