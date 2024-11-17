@@ -240,7 +240,7 @@ namespace GoParkAPI.Controllers
                 var exitingRes = await _context.Reservation.Where(res => res.Car.LicensePlate == resDTO.licensePlate && !res.IsFinish && !res.IsCanceled && res.PaymentStatus == false).FirstOrDefaultAsync();
                 if (exitingRes != null)
                 {
-                    return BadRequest(new { Message = "您有未完成的預約，請先完成或取消" });
+                    return BadRequest(new { Message = "您有未付款的預約，請先完成付款或取消" });
                 }
 
                 var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
