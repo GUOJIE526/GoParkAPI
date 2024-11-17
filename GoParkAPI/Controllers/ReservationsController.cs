@@ -236,6 +236,13 @@ namespace GoParkAPI.Controllers
                 {
                     return BadRequest(new { Message = "無法取得用戶ID" });
                 }
+
+                var exitingRes = await _context.Reservation.Where(res => res.Car.LicensePlate == resDTO.licensePlate && !res.IsFinish && !res.IsCanceled && res.PaymentStatus == false).FirstOrDefaultAsync();
+                if (exitingRes != null)
+                {
+                    return BadRequest(new { Message = "您有未完成的預約，請先完成或取消" });
+                }
+
                 var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
                 var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
                 if((resDTO.startTime - taiwanTime).TotalHours > 6)
