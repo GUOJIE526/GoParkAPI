@@ -156,6 +156,11 @@ namespace GoParkAPI.Controllers
             {
                 return BadRequest(new { Message = "取消預訂失敗，查無此預訂資料" });
             }
+            else if(updateRes.PaymentStatus == false)
+            {
+                updateRes.IsCanceled = true;
+                updateRes.IsFinish = true;  //要設為完成，取消會顯示在前端已結案區塊
+            }
             else
             {
                 updateRes.IsCanceled =true;
