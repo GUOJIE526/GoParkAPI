@@ -138,7 +138,7 @@ namespace GoParkAPI.Controllers
                 };
 
                 // 指定模板路徑
-                string templatePath = "Templates/EmailTemplate.html";
+                string templatePath = "EmailTemplate.html";
 
                 // 讀取模板並替換佔位符
                 string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
@@ -294,7 +294,7 @@ namespace GoParkAPI.Controllers
                 };
 
                 // 指定模板路徑
-                string templatePath = "Templates/EmailTemplate.html";
+                string templatePath = "EmailTemplate.html";
 
                 // 讀取模板並替換佔位符
                 string emailBody = await _sentmail.LoadEmailTemplateAsync(templatePath, placeholders);
