@@ -248,6 +248,14 @@ namespace GoParkAPI.Controllers
                     return BadRequest(new { Message = "您有未完成的預約，請先完成付款或取消" });
                 }
 
+                var CarInLot = await (from entry in _context.EntryExitManagement
+                                      where entry.Car.LicensePlate == resDTO.licensePlate && entry.PaymentStatus == false
+                                      select entry).FirstOrDefaultAsync();
+                if (CarInLot != null)
+                {
+                    return BadRequest(new { Message = "您有未付款的進場紀錄，請先完成付款或離場" });
+                }
+
                 var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
                 var taiwanTime = TimeZoneInfo.ConvertTime(DateTime.Now, taiwanTimeZone);
                 if((resDTO.startTime - taiwanTime).TotalHours > 6)
