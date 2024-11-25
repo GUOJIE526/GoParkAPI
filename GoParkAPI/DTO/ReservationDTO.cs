@@ -6,17 +6,17 @@
 
         public DateTime? resTime { get; set; }
 
-        public string? lotName { get; set; }
+        public string lotName { get; set; } = null!;
 
-        public string? district { get; set; }
+        public string? district { get; set; } = null!;
 
-        public string? location { get; set; }
+        public string? location { get; set; } = null!;
 
-        public string? licensePlate { get; set; }
+        public string licensePlate { get; set; } = null!;
 
-        public DateTime? startTime { get; set; } //預約進場時間
+        public DateTime startTime { get; set; } //預約進場時間
 
-        public DateTime? validUntil { get; set; }  //預約進場時間+時限 //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
+        public DateTime validUntil { get; set; }  //預約進場時間+時限 //用來判斷若現在訂單還沒完成，是否逾期，若未逾期則可取消訂單
 
         public bool PaymentStatus { get; set; }
        
