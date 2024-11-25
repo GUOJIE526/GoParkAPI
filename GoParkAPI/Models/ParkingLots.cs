@@ -45,7 +45,7 @@ public partial class ParkingLots
 
     public int ValidSpace { get; set; }
 
-    public int ResOverdueValidTimeSet { get; set; }
+    //public int ResOverdueValidTimeSet { get; set; }
 
     public virtual ICollection<EntryExitManagement> EntryExitManagement { get; set; } = new List<EntryExitManagement>();
 
