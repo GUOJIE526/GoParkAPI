@@ -36,7 +36,7 @@ namespace GoParkAPI.Services
 
             //計算Valid_until
             DateTime startTime = resDTO.startTime;
-            TimeSpan overdueTime = TimeSpan.FromHours(parkingLots.ResOverdueValidTimeSet);
+            TimeSpan overdueTime = TimeSpan.FromMinutes(15);
             DateTime validUntil = startTime.Add(overdueTime);
 
             var taiwanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
