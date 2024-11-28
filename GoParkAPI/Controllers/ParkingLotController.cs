@@ -83,16 +83,16 @@ namespace GoParkAPI.Controllers
         [HttpGet("GetParkingLots")]
         public async Task<IActionResult> GetParkingLots()
         {
+            string redisKey = "AllParkingLot";
+
+            var jsonSerialize = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
             try
             {
-                string redisKey = "AllParkingLot";
                 var cacheParkingLots = await _db.StringGetAsync(redisKey);
-
-                var jsonSerialize = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    PropertyNameCaseInsensitive = true
-                };
 
                 if (!cacheParkingLots.IsNullOrEmpty)
                 {
