@@ -85,20 +85,20 @@ namespace GoParkAPI.Controllers
         {
             try
             {
-                string redisKey = "AllParkingLot";
-                var cacheParkingLots = await _db.StringGetAsync(redisKey);
+                //string redisKey = "AllParkingLot";
+                //var cacheParkingLots = await _db.StringGetAsync(redisKey);
 
-                var jsonSerialize = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    PropertyNameCaseInsensitive = true
-                };
+                //var jsonSerialize = new JsonSerializerOptions
+                //{
+                //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                //    PropertyNameCaseInsensitive = true
+                //};
 
-                if (!cacheParkingLots.IsNullOrEmpty)
-                {
-                    var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots, jsonSerialize);
-                    return Ok(LotsFromCache);
-                }
+                //if (!cacheParkingLots.IsNullOrEmpty)
+                //{
+                //    var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots, jsonSerialize);
+                //    return Ok(LotsFromCache);
+                //}
 
                 var parkingLots = await _context.ParkingLots.Select(p => new
                 {
@@ -119,7 +119,7 @@ namespace GoParkAPI.Controllers
                     tel = p.Tel ?? "無資料",
                     validSpace = p.ValidSpace,
                 }).ToListAsync();
-                await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots, jsonSerialize), TimeSpan.FromMinutes(10));
+                //await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots, jsonSerialize), TimeSpan.FromMinutes(10));
                 return Ok(parkingLots);
             }
             catch (Exception e)
