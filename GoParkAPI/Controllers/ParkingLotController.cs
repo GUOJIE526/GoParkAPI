@@ -46,7 +46,7 @@ namespace GoParkAPI.Controllers
             {
                 var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
                 requestMessage.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36");
-                requestMessage.Headers.Add("Referer", "https://localhost:7077");
+                requestMessage.Headers.Add("Referer", "https://goparkapi.azurewebsites.net");
 
                 // Send HTTP request to Nominatim API
                 var response = await _httpClient.SendAsync(requestMessage);
