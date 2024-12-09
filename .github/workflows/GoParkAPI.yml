@@ -44,6 +44,7 @@ jobs:
       uses: azure/login@v2
       with:
         creds: ${{ secrets.GoParkAPI_SPN }}
+        enable-AzPSSession: true
     - name: Deploy to Azure WebApp
       uses: azure/webapps-deploy@v2
       with:
