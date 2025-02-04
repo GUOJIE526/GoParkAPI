@@ -126,7 +126,6 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-
 //app.MapHub<ReservationHub>("/reservationHub"); // 設置 SignalR Hub 路徑
 app.UseRouting();
 app.UseCors();
