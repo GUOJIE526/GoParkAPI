@@ -132,8 +132,6 @@ app.UseCors();
 
 
 
-
-
 // 啟用 Hangfire Dashboard
 //app.UseHangfireDashboard();
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
