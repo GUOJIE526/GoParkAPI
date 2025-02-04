@@ -17,7 +17,7 @@ public class PackageDto
     public string Id { get; set; }
     public int Amount { get; set; }
     public string Name { get; set; }
-    public List<LinePayProductDto> Products { get; set; }
+    public List<LinePayProductDto>? Products { get; set; }
     public int? UserFee { get; set; }
 
    
@@ -37,8 +37,8 @@ public class LinePayProductDto
 
 public class RedirectUrlsDto
 {
-    public string ConfirmUrl { get; set; }
-    public string CancelUrl { get; set; }
+    public string? ConfirmUrl { get; set; }
+    public string? CancelUrl { get; set; }
     public string? AppPackageName { get; set; }
     public string? ConfirmUrlType { get; set; }
 }
