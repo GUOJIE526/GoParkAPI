@@ -135,7 +135,7 @@ namespace GoParkAPI.Controllers
             {
                 //var cacheParkingLots = await _db.StringGetAsync(redisKey);
 
-                if (memoryCache.TryGetValue(cacheKey, out List<object> cacheParkingLots))
+                if (memoryCache.TryGetValue(cacheKey, out List<object>? cacheParkingLots))
                 {
                     //var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots, jsonSerialize);
                     return Ok(cacheParkingLots);
