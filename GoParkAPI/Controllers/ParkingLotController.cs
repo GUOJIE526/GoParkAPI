@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json.Linq;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -121,9 +122,9 @@ namespace GoParkAPI.Controllers
         }
 
         [HttpGet("GetParkingLots")]
-        public async Task<IActionResult> GetParkingLots()
+        public async Task<IActionResult> GetParkingLots([FromServices] IMemoryCache memoryCache)
         {
-            string redisKey = "AllParkingLot";
+            string cacheKey = "AllParkingLot";
 
             var jsonSerialize = new JsonSerializerOptions
             {
@@ -132,12 +133,12 @@ namespace GoParkAPI.Controllers
             };
             try
             {
-                var cacheParkingLots = await _db.StringGetAsync(redisKey);
+                //var cacheParkingLots = await _db.StringGetAsync(redisKey);
 
-                if (!cacheParkingLots.IsNullOrEmpty)
+                if (memoryCache.TryGetValue(cacheKey, out List<object> cacheParkingLots))
                 {
-                    var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots, jsonSerialize);
-                    return Ok(LotsFromCache);
+                    //var LotsFromCache = JsonSerializer.Deserialize<List<object>>(cacheParkingLots, jsonSerialize);
+                    return Ok(cacheParkingLots);
                 }
 
                 var parkingLots = await _context.ParkingLots.Select(p => new
@@ -159,7 +160,8 @@ namespace GoParkAPI.Controllers
                     tel = p.Tel ?? "無資料",
                     validSpace = p.ValidSpace,
                 }).ToListAsync();
-                await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots, jsonSerialize), TimeSpan.FromMinutes(10));
+                //await _db.StringSetAsync(redisKey, JsonSerializer.Serialize(parkingLots, jsonSerialize), TimeSpan.FromMinutes(10));
+                memoryCache.Set(cacheKey, parkingLots, TimeSpan.FromMinutes(10));
                 return Ok(parkingLots);
             }
             catch (Exception e)
