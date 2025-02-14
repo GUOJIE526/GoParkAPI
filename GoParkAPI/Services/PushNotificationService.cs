@@ -64,11 +64,15 @@ namespace GoParkAPI.Services
             // 根據條件查找第一個符合條件的 Reservation 記錄
             //var res = await _context.Reservation.FirstOrDefaultAsync(r => r.ResId == resId);
             //var user = await _context.Reservation.Where(r => r.ResId == resId).Select(r => r.Car.UserId).FirstOrDefaultAsync();
-            var result = await (from r in _context.Reservation join c in _context.Car on r.CarId equals c.CarId join u in _context.Customer on c.UserId equals u.UserId where r.ResId == resId select new
-            {
-                Reservation = r,
-                CarUserId = u.UserId
-            }).FirstOrDefaultAsync();
+            var result = await (from r in _context.Reservation 
+                                join c in _context.Car on r.CarId equals c.CarId 
+                                join u in _context.Customer on c.UserId equals u.UserId 
+                                where r.ResId == resId 
+                                select new
+                                {
+                                    Reservation = r,
+                                    CarUserId = u.UserId
+                                }).FirstOrDefaultAsync();
 
             if (result != null)
             {
